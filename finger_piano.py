@@ -152,7 +152,7 @@ class FingerPiano:
         """
         previous_y = self.finger_y_positions[finger_id]
         
-        # Check if finger moved up (y decreases upward in image coordinates, finger folding)
+        # Check if finger moved up (finger folding - y decreases in standard image coordinates where y=0 is at top)
         movement = previous_y - current_y
         
         # Update position

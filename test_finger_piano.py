@@ -83,7 +83,7 @@ class TestFingerPiano(unittest.TestCase):
         self.piano.finger_y_positions = [0.5, 0.5, 0.5, 0.5, 0.5]
         self.piano.finger_states = [False, False, False, False, False]
         
-        # Test upward movement - finger folding (should trigger)
+        # Test upward physical movement (finger folding) - y coordinate decreases from 0.5 to 0.4 (should trigger)
         result = self.piano._detect_finger_movement(0, 0.4)
         self.assertTrue(result)
         
@@ -92,7 +92,7 @@ class TestFingerPiano(unittest.TestCase):
         result = self.piano._detect_finger_movement(1, 0.48)
         self.assertFalse(result)
         
-        # Test downward movement - finger extending (should not trigger)
+        # Test downward physical movement (finger extending) - y coordinate increases from 0.5 to 0.6 (should not trigger)
         self.piano.finger_states[2] = False
         result = self.piano._detect_finger_movement(2, 0.6)
         self.assertFalse(result)
