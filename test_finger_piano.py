@@ -321,6 +321,83 @@ class TestConfig(unittest.TestCase):
         
         self.assertEqual(config.get('camera_id'), 0)
         self.assertEqual(config.get('instrument'), 'piano')
+    
+    def test_instrument_options(self):
+        """Test that all supported instruments are defined."""
+        config = Config(self.test_config_file)
+        
+        # Test that INSTRUMENTS list contains all expected instruments
+        expected_instruments = ['piano', 'guitar', 'electric_guitar', 'violin']
+        self.assertEqual(Config.INSTRUMENTS, expected_instruments)
+        
+        # Test setting each instrument
+        for instrument in expected_instruments:
+            config.set('instrument', instrument)
+            self.assertEqual(config.get('instrument'), instrument)
+
+
+class TestInstruments(unittest.TestCase):
+    """Test instrument-specific functionality."""
+    
+    @patch('finger_piano.cv2.VideoCapture')
+    @patch('finger_piano.pygame.mixer.init')
+    @patch('finger_piano.pygame.sndarray.make_sound')
+    def test_sound_generation_for_all_instruments(self, mock_make_sound, mock_mixer, mock_capture):
+        """Test that sounds are generated for all supported instruments."""
+        # Mock camera
+        mock_cap = Mock()
+        mock_cap.isOpened.return_value = True
+        mock_capture.return_value = mock_cap
+        
+        # Mock sound creation
+        mock_sound = Mock()
+        mock_make_sound.return_value = mock_sound
+        
+        instruments = ['piano', 'guitar', 'electric_guitar', 'violin']
+        
+        for instrument in instruments:
+            # Create config with specific instrument
+            config = Config()
+            config.set('instrument', instrument)
+            
+            # Create instance
+            piano = FingerPiano(config)
+            
+            # Verify sounds were generated
+            self.assertIsNotNone(piano.sounds)
+            self.assertGreater(len(piano.sounds), 0)
+            
+            # Verify all chords have sounds
+            for chord_name in piano.CHORDS.keys():
+                self.assertIn(chord_name, piano.sounds)
+    
+    @patch('finger_piano.cv2.VideoCapture')
+    @patch('finger_piano.pygame.mixer.init')
+    @patch('finger_piano.pygame.sndarray.make_sound')
+    def test_instrument_selection(self, mock_make_sound, mock_mixer, mock_capture):
+        """Test that instrument selection is properly stored in config."""
+        # Mock camera
+        mock_cap = Mock()
+        mock_cap.isOpened.return_value = True
+        mock_capture.return_value = mock_cap
+        
+        # Mock sound creation
+        mock_sound = Mock()
+        mock_make_sound.return_value = mock_sound
+        
+        # Test each instrument
+        for instrument in ['piano', 'guitar', 'electric_guitar', 'violin']:
+            config = Config()
+            config.set('instrument', instrument)
+            
+            # Verify instrument is set correctly
+            self.assertEqual(config.get('instrument'), instrument)
+            
+            # Create FingerPiano instance
+            piano = FingerPiano(config)
+            
+            # Verify it uses the correct instrument
+            self.assertEqual(piano.config.get('instrument'), instrument)
 
 
 def run_tests():

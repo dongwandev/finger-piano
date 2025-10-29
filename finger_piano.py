@@ -94,7 +94,7 @@ class FingerPiano:
         self.screens = {}
         
     def _generate_piano_sounds(self) -> dict:
-        """Generate synthesized piano sounds for each chord.
+        """Generate synthesized sounds for each chord based on selected instrument.
         
         Returns:
             Dictionary mapping chord names to pygame Sound objects
@@ -103,32 +103,60 @@ class FingerPiano:
         sample_rate = 22050
         duration = 0.5  # seconds
         
+        # Get current instrument
+        instrument = self.config.get('instrument', 'piano')
+        
+        # Define instrument characteristics (harmonics and ADSR)
+        instrument_profiles = {
+            'piano': {
+                'harmonics': [(1.0, 1.0), (0.3, 2.0), (0.1, 3.0)],  # (amplitude, frequency_multiplier)
+                'attack': 0.05, 'decay': 0.05, 'sustain': 0.7, 'release': 0.1
+            },
+            'guitar': {
+                'harmonics': [(1.0, 1.0), (0.5, 2.0), (0.25, 3.0), (0.15, 4.0)],
+                'attack': 0.01, 'decay': 0.1, 'sustain': 0.6, 'release': 0.2
+            },
+            'electric_guitar': {
+                'harmonics': [(1.0, 1.0), (0.7, 2.0), (0.5, 3.0), (0.3, 4.0), (0.2, 5.0)],
+                'attack': 0.005, 'decay': 0.05, 'sustain': 0.8, 'release': 0.15
+            },
+            'violin': {
+                'harmonics': [(1.0, 1.0), (0.6, 2.0), (0.4, 3.0), (0.3, 4.0), (0.2, 5.0), (0.1, 6.0)],
+                'attack': 0.1, 'decay': 0.05, 'sustain': 0.85, 'release': 0.1
+            }
+        }
+        
+        profile = instrument_profiles.get(instrument, instrument_profiles['piano'])
+        
         # First, generate individual note waves
         note_waves = {}
         for note, frequency in self.NOTE_FREQUENCIES.items():
-            # Generate a simple sine wave with ADSR envelope
+            # Generate wave with instrument-specific harmonics
             samples = int(sample_rate * duration)
             wave = np.zeros(samples)
+            
+            attack_time = profile['attack']
+            decay_time = profile['decay']
+            sustain_level = profile['sustain']
+            release_time = profile['release']
+            sustain_duration = duration - attack_time - decay_time - release_time
             
             for i in range(samples):
                 t = i / sample_rate
                 
                 # ADSR envelope
-                if t < 0.05:  # Attack
-                    envelope = t / 0.05
-                elif t < 0.1:  # Decay
-                    envelope = 1.0 - 0.3 * (t - 0.05) / 0.05
-                elif t < 0.4:  # Sustain
-                    envelope = 0.7
+                if t < attack_time:  # Attack
+                    envelope = t / attack_time
+                elif t < attack_time + decay_time:  # Decay
+                    envelope = 1.0 - (1.0 - sustain_level) * (t - attack_time) / decay_time
+                elif t < attack_time + decay_time + sustain_duration:  # Sustain
+                    envelope = sustain_level
                 else:  # Release
-                    envelope = 0.7 * (1.0 - (t - 0.4) / 0.1)
+                    envelope = sustain_level * (1.0 - (t - attack_time - decay_time - sustain_duration) / release_time)
                 
-                # Generate sine wave with envelope
-                wave[i] = envelope * np.sin(2 * np.pi * frequency * t)
-                
-                # Add harmonics for richer sound
-                wave[i] += 0.3 * envelope * np.sin(4 * np.pi * frequency * t)
-                wave[i] += 0.1 * envelope * np.sin(6 * np.pi * frequency * t)
+                # Generate wave with harmonics
+                for amplitude, freq_mult in profile['harmonics']:
+                    wave[i] += amplitude * envelope * np.sin(2 * np.pi * frequency * freq_mult * t)
             
             note_waves[note] = wave
         
@@ -391,6 +419,9 @@ class FingerPiano:
         
         # Update trigger threshold
         self.trigger_threshold = self.config.get('trigger_threshold', 0.05)
+        
+        # Regenerate sounds with current instrument
+        self.sounds = self._generate_piano_sounds()
         
         # Reset finger states
         self.finger_states = [False] * 5
