@@ -37,6 +37,14 @@ class FingerPiano:
         'C5': 523.25, 'D5': 587.33, 'E5': 659.25
     }
     
+    # Instrument sound synthesis parameters
+    INSTRUMENT_PARAMS = {
+        'violin': {
+            'vibrato_rate': 5.5,      # Hz
+            'vibrato_depth': 0.02,     # 2% frequency variation
+        }
+    }
+    
     # Colors for visualization
     COLORS = {
         'active': (0, 255, 0),      # Green for active finger
@@ -133,6 +141,7 @@ class FingerPiano:
                     
                 elif instrument == 'guitar':
                     # Guitar: Moderate attack, longer sustain, natural decay
+                    guitar_release_duration = 0.05
                     if t < 0.08:  # Attack
                         envelope = t / 0.08
                     elif t < 0.15:  # Decay
@@ -140,7 +149,7 @@ class FingerPiano:
                     elif t < 0.45:  # Sustain
                         envelope = 0.8 * np.exp(-2 * (t - 0.15))
                     else:  # Release
-                        envelope = 0.8 * np.exp(-2 * (t - 0.15)) * (1.0 - (t - 0.45) / 0.05)
+                        envelope = 0.8 * np.exp(-2 * (t - 0.15)) * (1.0 - (t - 0.45) / guitar_release_duration)
                     
                     # Guitar: Warm tone with plucked string harmonics
                     wave[i] = envelope * np.sin(2 * np.pi * frequency * t)
@@ -150,6 +159,7 @@ class FingerPiano:
                     
                 elif instrument == 'electric_guitar':
                     # Electric Guitar: Sharp attack, long sustain with distortion harmonics
+                    electric_release_duration = 0.02
                     if t < 0.03:  # Attack
                         envelope = t / 0.03
                     elif t < 0.08:  # Decay
@@ -157,7 +167,7 @@ class FingerPiano:
                     elif t < 0.48:  # Sustain (longer for electric)
                         envelope = 0.9
                     else:  # Release
-                        envelope = 0.9 * (1.0 - (t - 0.48) / 0.02)
+                        envelope = 0.9 * (1.0 - (t - 0.48) / electric_release_duration)
                     
                     # Electric Guitar: Bright tone with more harmonics
                     wave[i] = envelope * np.sin(2 * np.pi * frequency * t)
@@ -168,16 +178,17 @@ class FingerPiano:
                     
                 elif instrument == 'violin':
                     # Violin: Slow attack (bow), continuous sustain with vibrato
+                    violin_release_duration = 0.05
                     if t < 0.1:  # Attack (bow starting)
                         envelope = t / 0.1
                     elif t < 0.45:  # Sustain
                         envelope = 1.0
                     else:  # Release
-                        envelope = 1.0 * (1.0 - (t - 0.45) / 0.05)
+                        envelope = 1.0 * (1.0 - (t - 0.45) / violin_release_duration)
                     
                     # Violin: String-like tone with vibrato
-                    vibrato_rate = 5.5  # Hz
-                    vibrato_depth = 0.02  # 2% frequency variation
+                    vibrato_rate = self.INSTRUMENT_PARAMS['violin']['vibrato_rate']
+                    vibrato_depth = self.INSTRUMENT_PARAMS['violin']['vibrato_depth']
                     vibrato = 1.0 + vibrato_depth * np.sin(2 * np.pi * vibrato_rate * t)
                     
                     wave[i] = envelope * np.sin(2 * np.pi * frequency * vibrato * t)
