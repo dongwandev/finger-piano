@@ -329,6 +329,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.get('min_detection_confidence'), 0.7)
         self.assertEqual(config.get('min_tracking_confidence'), 0.5)
         self.assertEqual(config.get('trigger_threshold'), 0.15)
+        self.assertEqual(config.get('chord_preset'), 'default')
     
     def test_save_and_load(self):
         """Test saving and loading configuration."""
@@ -362,6 +363,118 @@ class TestConfig(unittest.TestCase):
         
         self.assertEqual(config.get('camera_id'), 0)
         self.assertEqual(config.get('instrument'), 'piano')
+
+
+class TestChordPresets(unittest.TestCase):
+    """Test chord preset functionality."""
+    
+    @patch('finger_piano.cv2.VideoCapture')
+    @patch('finger_piano.pygame.mixer.init')
+    @patch('finger_piano.pygame.sndarray.make_sound')
+    def setUp(self, mock_make_sound, mock_mixer, mock_capture):
+        """Set up test fixtures."""
+        # Mock camera
+        mock_cap = Mock()
+        mock_cap.isOpened.return_value = True
+        mock_capture.return_value = mock_cap
+        
+        # Mock sound creation
+        mock_sound = Mock()
+        mock_make_sound.return_value = mock_sound
+        
+        # Create config
+        config = Config()
+        
+        # Create instance
+        self.piano = FingerPiano(config)
+    
+    def test_chord_presets_defined(self):
+        """Test that all chord presets are defined."""
+        self.assertIn('default', FingerPiano.CHORD_PRESETS)
+        self.assertIn('preset1', FingerPiano.CHORD_PRESETS)
+        self.assertIn('preset2', FingerPiano.CHORD_PRESETS)
+        self.assertIn('preset3', FingerPiano.CHORD_PRESETS)
+        
+        # Check default preset
+        default = FingerPiano.CHORD_PRESETS['default']
+        self.assertEqual(len(default), 5)
+        self.assertEqual(default, ['C Major', 'G Major', 'A Minor', 'F Major', 'D Major'])
+        
+        # Check preset1
+        preset1 = FingerPiano.CHORD_PRESETS['preset1']
+        self.assertEqual(len(preset1), 5)
+        self.assertEqual(preset1, ['G Major', 'D Major', 'E Minor', 'C Major', ''])
+        
+        # Check preset2
+        preset2 = FingerPiano.CHORD_PRESETS['preset2']
+        self.assertEqual(len(preset2), 5)
+        self.assertEqual(preset2, ['A Minor', 'C Major', 'G Major', 'D Major', ''])
+        
+        # Check preset3
+        preset3 = FingerPiano.CHORD_PRESETS['preset3']
+        self.assertEqual(len(preset3), 5)
+        self.assertEqual(preset3, ['E Major', 'A Minor', 'A Sus4', '', ''])
+    
+    def test_new_chords_have_definitions(self):
+        """Test that new chords have proper definitions."""
+        self.assertIn('E Minor', FingerPiano.CHORDS)
+        self.assertIn('E Major', FingerPiano.CHORDS)
+        self.assertIn('A Sus4', FingerPiano.CHORDS)
+        
+        # Check chord notes
+        self.assertEqual(FingerPiano.CHORDS['E Minor'], ['E4', 'G4', 'B4'])
+        self.assertEqual(FingerPiano.CHORDS['E Major'], ['E4', 'G#4', 'B4'])
+        self.assertEqual(FingerPiano.CHORDS['A Sus4'], ['A4', 'D5', 'E5'])
+    
+    def test_new_notes_have_frequencies(self):
+        """Test that new notes have frequencies defined."""
+        self.assertIn('G#4', FingerPiano.NOTE_FREQUENCIES)
+        self.assertGreater(FingerPiano.NOTE_FREQUENCIES['G#4'], 0)
+    
+    def test_default_preset_loaded(self):
+        """Test that default preset is loaded by default."""
+        self.assertEqual(self.piano.current_preset, 
+                        FingerPiano.CHORD_PRESETS['default'])
+    
+    def test_unassigned_finger_no_sound(self):
+        """Test that unassigned fingers don't play sound."""
+        # Mock the sound playing
+        for chord_name in self.piano.sounds:
+            self.piano.sounds[chord_name] = Mock()
+        
+        # Switch to preset3 which has unassigned fingers
+        self.piano.current_preset = FingerPiano.CHORD_PRESETS['preset3']
+        
+        # Try to play unassigned finger (finger 3 and 4 are unassigned in preset3)
+        self.piano.finger_states[3] = False
+        self.piano._play_note(3)
+        
+        # Finger state should not be set to True
+        self.assertFalse(self.piano.finger_states[3])
+        
+        # Try to play assigned finger (finger 0 is E Major in preset3)
+        self.piano.finger_states[0] = False
+        self.piano._play_note(0)
+        
+        # Finger state should be set to True
+        self.assertTrue(self.piano.finger_states[0])
+        self.piano.sounds['E Major'].play.assert_called_once()
+    
+    def test_preset_change_in_config(self):
+        """Test changing preset through config."""
+        # Change to preset1
+        self.piano.config.set('chord_preset', 'preset1')
+        self.piano._reinitialize_from_config()
+        
+        self.assertEqual(self.piano.current_preset, 
+                        FingerPiano.CHORD_PRESETS['preset1'])
+        
+        # Change to preset2
+        self.piano.config.set('chord_preset', 'preset2')
+        self.piano._reinitialize_from_config()
+        
+        self.assertEqual(self.piano.current_preset,
+                        FingerPiano.CHORD_PRESETS['preset2'])
 
 
 def run_tests():

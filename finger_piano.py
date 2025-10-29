@@ -27,13 +27,25 @@ class FingerPiano:
         'G Major': ['G4', 'B4', 'D5'],       # G, B, D
         'A Minor': ['A4', 'C5', 'E5'],       # A, C, E
         'F Major': ['F4', 'A4', 'C5'],       # F, A, C
-        'D Major': ['D4', 'F#4', 'A4']       # D, F#, A
+        'D Major': ['D4', 'F#4', 'A4'],      # D, F#, A
+        'E Minor': ['E4', 'G4', 'B4'],       # Em
+        'E Major': ['E4', 'G#4', 'B4'],      # E
+        'A Sus4': ['A4', 'D5', 'E5']         # Asus4
+    }
+    
+    # Chord presets - each preset defines which chords are assigned to each finger
+    # Format: preset_name -> list of chord names (empty string for unassigned fingers)
+    CHORD_PRESETS = {
+        'default': ['C Major', 'G Major', 'A Minor', 'F Major', 'D Major'],
+        'preset1': ['G Major', 'D Major', 'E Minor', 'C Major', ''],
+        'preset2': ['A Minor', 'C Major', 'G Major', 'D Major', ''],
+        'preset3': ['E Major', 'A Minor', 'A Sus4', '', '']
     }
     
     # MIDI note frequencies (expanded to include all notes needed for chords)
     NOTE_FREQUENCIES = {
         'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23,
-        'F#4': 369.99, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88, 
+        'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'B4': 493.88, 
         'C5': 523.25, 'D5': 587.33, 'E5': 659.25
     }
     
@@ -81,6 +93,10 @@ class FingerPiano:
         
         # Generate piano sounds
         self.sounds = self._generate_piano_sounds()
+        
+        # Set current chord preset
+        preset_name = self.config.get('chord_preset', 'default')
+        self.current_preset = self.CHORD_PRESETS.get(preset_name, self.CHORD_PRESETS['default'])
         
         # Track finger states (whether each finger is currently playing)
         self.finger_states = [False] * 5
@@ -229,9 +245,10 @@ class FingerPiano:
         Args:
             finger_id: Index of the finger (0-4)
         """
-        if finger_id < len(self.NOTES):
-            chord_name = self.NOTES[finger_id]
-            if chord_name in self.sounds:
+        if finger_id < len(self.current_preset):
+            chord_name = self.current_preset[finger_id]
+            # Skip if finger is unassigned (empty string)
+            if chord_name and chord_name in self.sounds:
                 self.sounds[chord_name].play()
                 self.finger_states[finger_id] = True
     
@@ -425,6 +442,10 @@ class FingerPiano:
         
         # Update trigger threshold
         self.trigger_threshold = self.config.get('trigger_threshold', 0.15)
+        
+        # Update chord preset
+        preset_name = self.config.get('chord_preset', 'default')
+        self.current_preset = self.CHORD_PRESETS.get(preset_name, self.CHORD_PRESETS['default'])
         
         # Reset finger states
         self.finger_states = [False] * 5

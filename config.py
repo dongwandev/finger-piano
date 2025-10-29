@@ -18,6 +18,7 @@ class Config:
         'min_detection_confidence': 0.7,
         'min_tracking_confidence': 0.5,
         'trigger_threshold': 0.15,
+        'chord_preset': 'default',
     }
     
     INSTRUMENTS = ['piano', 'guitar', 'electric_guitar', 'violin']

@@ -171,11 +171,13 @@ class SettingsScreen(Screen):
             {'label': 'Test Camera', 'type': 'test_camera'},
             {'label': 'Instrument', 'type': 'instrument', 
              'values': ['Piano', 'Guitar', 'Electric Guitar', 'Violin']},
+            {'label': 'Chord Preset', 'type': 'chord_preset',
+             'values': ['Default', 'Preset 1', 'Preset 2', 'Preset 3']},
             {'label': 'Detection Confidence', 'type': 'detection', 
              'values': [0.5, 0.6, 0.7, 0.8, 0.9]},
             {'label': 'Tracking Confidence', 'type': 'tracking',
              'values': [0.3, 0.4, 0.5, 0.6, 0.7]},
-            {'label': 'Sensitivity (Lower=More sensitive)', 'type': 'trigger',
+            {'label': 'Sensitivity', 'type': 'trigger',
              'values': [0.10, 0.15, 0.20, 0.25, 0.30]},
             {'label': 'Save & Return', 'type': 'save'},
             {'label': 'Cancel', 'type': 'cancel'}
@@ -231,6 +233,16 @@ class SettingsScreen(Screen):
                 current_idx = 0
             new_idx = (current_idx + direction) % len(values)
             self.config.set('instrument', instruments_map[new_idx])
+        
+        elif opt_type == 'chord_preset':
+            presets_map = ['default', 'preset1', 'preset2', 'preset3']
+            current = self.config.get('chord_preset', 'default')
+            try:
+                current_idx = presets_map.index(current)
+            except ValueError:
+                current_idx = 0
+            new_idx = (current_idx + direction) % len(values)
+            self.config.set('chord_preset', presets_map[new_idx])
         
         elif opt_type == 'detection':
             current = self.config.get('min_detection_confidence', 0.7)
@@ -373,6 +385,15 @@ class SettingsScreen(Screen):
             }
             inst = self.config.get('instrument', 'piano')
             return instruments_map.get(inst, 'Piano')
+        elif opt_type == 'chord_preset':
+            presets_map = {
+                'default': 'Default',
+                'preset1': 'Preset 1',
+                'preset2': 'Preset 2',
+                'preset3': 'Preset 3'
+            }
+            preset = self.config.get('chord_preset', 'default')
+            return presets_map.get(preset, 'Default')
         elif opt_type == 'detection':
             return f"{self.config.get('min_detection_confidence', 0.7):.1f}"
         elif opt_type == 'tracking':
@@ -424,7 +445,11 @@ class PlayScreen(Screen):
         cv2.rectangle(frame, (5, 5), (300, 175), (255, 255, 255), 2)
         
         for i in range(5):
-            chord = self.piano.NOTES[i] if i < len(self.piano.NOTES) else 'N/A'
+            # Use current preset chord assignments
+            chord = self.piano.current_preset[i] if i < len(self.piano.current_preset) else 'N/A'
+            # Display as "Unassigned" if chord is empty
+            if not chord:
+                chord = 'Unassigned'
             is_active = self.piano.finger_states[i] if i < len(self.piano.finger_states) else False
             color = (0, 255, 0) if is_active else (100, 100, 100)
             
