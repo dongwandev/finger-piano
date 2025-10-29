@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import after path is set
 from finger_piano import FingerPiano
+from config import Config
 
 
 class TestFingerPiano(unittest.TestCase):
@@ -34,8 +35,11 @@ class TestFingerPiano(unittest.TestCase):
         mock_sound = Mock()
         mock_make_sound.return_value = mock_sound
         
+        # Create config
+        config = Config()
+        
         # Create instance
-        self.piano = FingerPiano()
+        self.piano = FingerPiano(config)
     
     def test_note_frequencies(self):
         """Test that all expected notes have frequencies defined."""
@@ -165,6 +169,64 @@ class TestSoundGeneration(unittest.TestCase):
         # Check wave is bounded between -1 and 1
         self.assertLessEqual(np.max(wave), 1.0)
         self.assertGreaterEqual(np.min(wave), -1.0)
+
+
+class TestConfig(unittest.TestCase):
+    """Test configuration management."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.test_config_file = '/tmp/test_finger_piano_config.json'
+        if os.path.exists(self.test_config_file):
+            os.remove(self.test_config_file)
+    
+    def tearDown(self):
+        """Clean up test fixtures."""
+        if os.path.exists(self.test_config_file):
+            os.remove(self.test_config_file)
+    
+    def test_default_config(self):
+        """Test default configuration values."""
+        config = Config(self.test_config_file)
+        
+        self.assertEqual(config.get('camera_id'), 0)
+        self.assertEqual(config.get('instrument'), 'piano')
+        self.assertEqual(config.get('min_detection_confidence'), 0.7)
+        self.assertEqual(config.get('min_tracking_confidence'), 0.5)
+        self.assertEqual(config.get('trigger_threshold'), 0.05)
+    
+    def test_save_and_load(self):
+        """Test saving and loading configuration."""
+        config = Config(self.test_config_file)
+        
+        # Modify config
+        config.set('camera_id', 1)
+        config.set('instrument', 'guitar')
+        config.set('min_detection_confidence', 0.8)
+        
+        # Save config
+        self.assertTrue(config.save())
+        
+        # Load config in new instance
+        config2 = Config(self.test_config_file)
+        
+        self.assertEqual(config2.get('camera_id'), 1)
+        self.assertEqual(config2.get('instrument'), 'guitar')
+        self.assertEqual(config2.get('min_detection_confidence'), 0.8)
+    
+    def test_config_reset(self):
+        """Test resetting configuration to defaults."""
+        config = Config(self.test_config_file)
+        
+        # Modify config
+        config.set('camera_id', 2)
+        config.set('instrument', 'violin')
+        
+        # Reset to defaults
+        config.reset_to_defaults()
+        
+        self.assertEqual(config.get('camera_id'), 0)
+        self.assertEqual(config.get('instrument'), 'piano')
 
 
 def run_tests():

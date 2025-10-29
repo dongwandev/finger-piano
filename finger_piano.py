@@ -10,6 +10,8 @@ import pygame
 import numpy as np
 from typing import Optional, Tuple, List
 import sys
+from config import Config
+from screens import LobbyScreen, SettingsScreen, PlayScreen
 
 
 class FingerPiano:
@@ -33,12 +35,15 @@ class FingerPiano:
         'connection': (0, 255, 255) # Cyan for connections
     }
     
-    def __init__(self, camera_id: int = 0):
+    def __init__(self, config: Optional[Config] = None):
         """Initialize the finger piano.
         
         Args:
-            camera_id: Camera device ID (default: 0)
+            config: Configuration object (creates default if None)
         """
+        # Load or create configuration
+        self.config = config if config is not None else Config()
+        
         # Initialize MediaPipe
         self.mp_hands = mp.solutions.hands
         self.mp_drawing = mp.solutions.drawing_utils
@@ -47,11 +52,12 @@ class FingerPiano:
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,
             max_num_hands=1,
-            min_detection_confidence=0.7,
-            min_tracking_confidence=0.5
+            min_detection_confidence=self.config.get('min_detection_confidence', 0.7),
+            min_tracking_confidence=self.config.get('min_tracking_confidence', 0.5)
         )
         
         # Initialize camera
+        camera_id = self.config.get('camera_id', 0)
         self.cap = cv2.VideoCapture(camera_id)
         if not self.cap.isOpened():
             raise RuntimeError(f"Cannot open camera {camera_id}")
@@ -71,7 +77,11 @@ class FingerPiano:
         self.finger_y_positions = [0.0] * 5
         
         # Threshold for triggering notes (finger tip y-position change)
-        self.trigger_threshold = 0.05
+        self.trigger_threshold = self.config.get('trigger_threshold', 0.05)
+        
+        # GUI state
+        self.current_screen = None
+        self.screens = {}
         
     def _generate_piano_sounds(self) -> dict:
         """Generate synthesized piano sounds for each note.
@@ -229,60 +239,122 @@ class FingerPiano:
                    0.7, (255, 255, 255), 2)
     
     def run(self):
-        """Main loop for the finger piano application."""
-        print("Finger Piano started. Press 'q' to quit.")
-        print("Move your fingers down to play piano notes!")
+        """Main loop for the finger piano application with GUI."""
+        print("Finger Piano started.")
+        print("Navigate using arrow keys or W/A/S/D")
+        
+        # Initialize screens
+        self.screens = {
+            'lobby': LobbyScreen(self.config),
+            'settings': SettingsScreen(self.config),
+            'play': PlayScreen(self.config, self)
+        }
+        
+        self.current_screen = self.screens['lobby']
+        self.current_screen.on_enter()
         
         while True:
-            # Read frame from camera
-            success, frame = self.cap.read()
-            if not success:
-                print("Failed to read from camera")
-                break
-            
-            # Flip the frame horizontally for mirror view
-            frame = cv2.flip(frame, 1)
-            
-            # Convert BGR to RGB
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            
-            # Process hand landmarks
-            results = self.hands.process(rgb_frame)
-            
-            # Process hand landmarks and detect finger movements
-            if results.multi_hand_landmarks:
-                hand_landmarks = results.multi_hand_landmarks[0]
-                
-                # Get finger tip positions
-                finger_tips = self._get_finger_tips(hand_landmarks)
-                
-                # Check each finger for movement
-                for finger_id, x, y in finger_tips:
-                    # Detect downward movement and play note
-                    if self._detect_finger_movement(finger_id, y):
-                        self._play_note(finger_id)
+            # Handle different screens
+            if self.current_screen.name == 'play':
+                # For play screen, read from camera
+                success, frame = self.cap.read()
+                if success:
+                    frame = cv2.flip(frame, 1)
+                    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     
-                    # Reset state if finger moved up
-                    self._reset_finger_state(finger_id, y)
-                
-                # Draw UI elements
-                self._draw_ui(frame, hand_landmarks, frame.shape[1], frame.shape[0])
+                    # Process hand landmarks
+                    results = self.hands.process(rgb_frame)
+                    
+                    if results.multi_hand_landmarks:
+                        hand_landmarks = results.multi_hand_landmarks[0]
+                        
+                        # Get finger tip positions
+                        finger_tips = self._get_finger_tips(hand_landmarks)
+                        
+                        # Check each finger for movement
+                        for finger_id, x, y in finger_tips:
+                            # Detect downward movement and play note
+                            if self._detect_finger_movement(finger_id, y):
+                                self._play_note(finger_id)
+                            
+                            # Reset state if finger moved up
+                            self._reset_finger_state(finger_id, y)
+                        
+                        # Draw hand landmarks
+                        self.mp_drawing.draw_landmarks(
+                            frame,
+                            hand_landmarks,
+                            self.mp_hands.HAND_CONNECTIONS,
+                            self.mp_drawing_styles.get_default_hand_landmarks_style(),
+                            self.mp_drawing_styles.get_default_hand_connections_style()
+                        )
+                    else:
+                        # No hand detected - reset all states
+                        self.finger_states = [False] * 5
+                    
+                    # Render play screen with camera frame
+                    rendered_frame = self.current_screen.render(frame)
+                else:
+                    # No camera frame available
+                    rendered_frame = self.current_screen.render(None)
             else:
-                # No hand detected - reset all states
-                self.finger_states = [False] * 5
+                # For other screens, render without camera
+                rendered_frame = self.current_screen.render()
+            
+            # Display the rendered frame
+            cv2.imshow('Finger Piano', rendered_frame)
+            
+            # Handle events
+            key = cv2.waitKey(1) & 0xFF
+            if key != 255:  # Key was pressed
+                next_screen_name = self.current_screen.handle_event(key)
                 
-                # Draw UI without hand landmarks
-                self._draw_ui(frame, None, frame.shape[1], frame.shape[0])
-            
-            # Display the frame
-            cv2.imshow('Finger Piano', frame)
-            
-            # Check for quit command
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+                if next_screen_name == 'quit':
+                    break
+                elif next_screen_name and next_screen_name in self.screens:
+                    # Navigate to new screen
+                    self.current_screen.on_exit()
+                    self.current_screen = self.screens[next_screen_name]
+                    self.current_screen.on_enter()
+                    
+                    # Reinitialize camera and hands if settings changed
+                    if next_screen_name == 'play':
+                        self._reinitialize_from_config()
         
         # Cleanup
         self.cleanup()
+    
+    def _reinitialize_from_config(self):
+        """Reinitialize camera and hand detection based on current config."""
+        # Close existing camera
+        if self.cap.isOpened():
+            self.cap.release()
+        
+        # Reopen with new camera ID
+        camera_id = self.config.get('camera_id', 0)
+        self.cap = cv2.VideoCapture(camera_id)
+        if not self.cap.isOpened():
+            print(f"Warning: Cannot open camera {camera_id}, using default")
+            self.cap = cv2.VideoCapture(0)
+        
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        
+        # Update hand detection parameters
+        self.hands.close()
+        self.hands = self.mp_hands.Hands(
+            static_image_mode=False,
+            max_num_hands=1,
+            min_detection_confidence=self.config.get('min_detection_confidence', 0.7),
+            min_tracking_confidence=self.config.get('min_tracking_confidence', 0.5)
+        )
+        
+        # Update trigger threshold
+        self.trigger_threshold = self.config.get('trigger_threshold', 0.05)
+        
+        # Reset finger states
+        self.finger_states = [False] * 5
+        self.finger_y_positions = [0.0] * 5
     
     def cleanup(self):
         """Release resources."""
@@ -296,7 +368,8 @@ class FingerPiano:
 def main():
     """Main entry point for the application."""
     try:
-        piano = FingerPiano()
+        config = Config()
+        piano = FingerPiano(config)
         piano.run()
     except KeyboardInterrupt:
         print("\nInterrupted by user")
