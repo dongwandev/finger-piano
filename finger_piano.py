@@ -288,7 +288,8 @@ class FingerPiano:
             current_extension: Current extension distance (tip to MCP)
         """
         # Update base extension if this is the most extended we've seen this finger
-        # (assume finger starts extended or becomes extended at some point)
+        # This automatically calibrates to each user's hand size and range of motion
+        # Note: Users should extend their fingers fully at least once for accurate readings
         if current_extension > self.finger_base_extensions[finger_id]:
             self.finger_base_extensions[finger_id] = current_extension
         
