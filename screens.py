@@ -176,7 +176,7 @@ class SettingsScreen(Screen):
             {'label': 'Tracking Confidence', 'type': 'tracking',
              'values': [0.3, 0.4, 0.5, 0.6, 0.7]},
             {'label': 'Trigger Threshold', 'type': 'trigger',
-             'values': [0.03, 0.04, 0.05, 0.06, 0.07]},
+             'values': [0.10, 0.12, 0.15, 0.18, 0.20]},
             {'label': 'Save & Return', 'type': 'save'},
             {'label': 'Cancel', 'type': 'cancel'}
         ]
@@ -251,7 +251,7 @@ class SettingsScreen(Screen):
             self.config.set('min_tracking_confidence', values[new_idx])
         
         elif opt_type == 'trigger':
-            current = self.config.get('trigger_threshold', 0.05)
+            current = self.config.get('trigger_threshold', 0.15)
             try:
                 current_idx = values.index(current)
             except ValueError:
