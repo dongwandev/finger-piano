@@ -19,7 +19,9 @@ The application now features a multi-screen GUI with lobby, settings, and play s
 - **Improved finger bending detection** - works reliably for all fingers including thumb
 - **Visual feedback** showing which fingers are active
 - **Synthesized piano sounds** for a rich musical experience
-- **5 fingers mapped to 5 chords** (C Major, G Major, A Minor, F Major, D Major)
+- **Customizable chord presets** - Choose from 4 different chord configurations
+  - Default preset with 5 chords (all fingers)
+  - 3 alternative presets with 3-4 chords (some fingers unassigned)
 - **Configurable settings** with persistent storage
 - **Multiple instrument support** (Piano, Guitar, Electric Guitar, Violin)
 - **Adjustable sensitivity** for detection and tracking confidence
@@ -69,6 +71,12 @@ Configure the application to your preferences:
 - **Camera ID** - Select camera device (0: built-in, 1-2: USB cameras)
 - **Test Camera** - Preview the selected camera feed
 - **Instrument** - Choose between Piano, Guitar, Electric Guitar, or Violin
+- **Chord Preset** - Select chord configuration for each finger:
+  - **Default** - C Major, G Major, A Minor, F Major, D Major (all fingers assigned)
+  - **Preset 1** - G Major, D Major, E Minor, C Major (pinky unassigned)
+  - **Preset 2** - A Minor, C Major, G Major, D Major (pinky unassigned)
+  - **Preset 3** - E Major, A Minor, A Sus4 (ring and pinky unassigned)
+  - *Note: Unassigned fingers produce no sound when bent*
 - **Detection Confidence** - Adjust hand detection sensitivity (0.5-0.9)
 - **Tracking Confidence** - Adjust hand tracking sensitivity (0.3-0.7)
 - **Sensitivity** - Adjust finger bending sensitivity (0.10-0.30)
@@ -97,12 +105,13 @@ The performance interface shows:
 2. Position your hand in front of the webcam
 3. Keep your palm facing the camera
 4. **Bend/curl your fingers** (like pressing piano keys) to play chords
-5. Each finger corresponds to a different chord:
+5. Each finger corresponds to a different chord (default preset):
    - **Thumb** → C Major (C, E, G)
    - **Index finger** → G Major (G, B, D)
    - **Middle finger** → A Minor (A, C, E)
    - **Ring finger** → F Major (F, A, C)
    - **Pinky** → D Major (D, F#, A)
+   - *Note: Chord assignments can be changed in Settings using different presets*
 
 6. Press **Q** or **ESC** to return to the lobby
 
@@ -117,6 +126,7 @@ The performance interface shows:
 - **Adjust sensitivity in settings** to control chord triggering:
   - If chords trigger too easily (too sensitive): **increase** the sensitivity value
   - If chords don't trigger easily enough: **decrease** the sensitivity value
+- **Try different chord presets** in settings to explore various chord progressions
 - Test your camera in the settings screen before playing to ensure it's working properly
 
 ## Technical Details
@@ -153,6 +163,7 @@ Settings are automatically saved to `finger_piano_config.json` in the applicatio
 
 - **camera_id**: Camera device ID (default: 0)
 - **instrument**: Selected instrument (default: 'piano')
+- **chord_preset**: Selected chord preset (default: 'default', options: 'default', 'preset1', 'preset2', 'preset3')
 - **min_detection_confidence**: Hand detection confidence threshold (default: 0.7)
 - **min_tracking_confidence**: Hand tracking confidence threshold (default: 0.5)
 - **trigger_threshold**: Finger bending sensitivity for chord triggering (default: 0.15, range: 0.10-0.30)
