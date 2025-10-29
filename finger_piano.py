@@ -165,9 +165,6 @@ class FingerPiano:
         # Check if finger moved down (y increases downward in image coordinates)
         movement = current_y - previous_y
         
-        # Update position
-        self.finger_y_positions[finger_id] = current_y
-        
         # Trigger if moved down and not already playing
         if movement > self.trigger_threshold and not self.finger_states[finger_id]:
             return True
@@ -186,18 +183,33 @@ class FingerPiano:
                 self.sounds[note].play()
                 self.finger_states[finger_id] = True
     
-    def _reset_finger_state(self, finger_id: int, current_y: float):
+    def _reset_finger_state(self, finger_id: int, current_y: float) -> bool:
         """Reset finger state when it moves back up.
         
         Args:
             finger_id: Index of the finger (0-4)
             current_y: Current y-position of the finger tip
+            
+        Returns:
+            True if the finger state was reset
         """
         previous_y = self.finger_y_positions[finger_id]
         
         # Reset if finger moved up significantly
         if current_y < previous_y - self.trigger_threshold:
             self.finger_states[finger_id] = False
+            return True
+        
+        return False
+    
+    def _update_finger_position(self, finger_id: int, current_y: float):
+        """Update the tracked position of a finger.
+        
+        Args:
+            finger_id: Index of the finger (0-4)
+            current_y: Current y-position of the finger tip
+        """
+        self.finger_y_positions[finger_id] = current_y
     
     def _draw_ui(self, image, hand_landmarks, image_width: int, image_height: int):
         """Draw UI elements on the image.
@@ -273,12 +285,15 @@ class FingerPiano:
                         
                         # Check each finger for movement
                         for finger_id, x, y in finger_tips:
+                            # Reset state if finger moved up (check before updating position)
+                            self._reset_finger_state(finger_id, y)
+                            
                             # Detect downward movement and play note
                             if self._detect_finger_movement(finger_id, y):
                                 self._play_note(finger_id)
                             
-                            # Reset state if finger moved up
-                            self._reset_finger_state(finger_id, y)
+                            # Update position after all checks
+                            self._update_finger_position(finger_id, y)
                         
                         # Draw hand landmarks
                         self.mp_drawing.draw_landmarks(

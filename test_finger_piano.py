@@ -144,6 +144,96 @@ class TestFingerPiano(unittest.TestCase):
         # Check that sound was played
         note = self.piano.NOTES[0]
         self.piano.sounds[note].play.assert_called_once()
+    
+    def test_press_release_press_cycle(self):
+        """Test complete press-release-press cycle for finger recognition.
+        
+        This test verifies that:
+        1. Finger press triggers note
+        2. Finger release resets state
+        3. Finger can be pressed again to re-trigger note
+        """
+        # Mock the sound playing
+        for note in self.piano.sounds:
+            self.piano.sounds[note] = Mock()
+        
+        finger_id = 0
+        
+        # Initial state: finger at rest position
+        self.piano.finger_y_positions[finger_id] = 0.5
+        self.piano.finger_states[finger_id] = False
+        
+        # Step 1: Finger moves down (press) - should trigger
+        current_y = 0.6  # moved down by 0.1 > threshold (0.05)
+        
+        # Check for reset (shouldn't happen, finger moved down)
+        self.piano._reset_finger_state(finger_id, current_y)
+        self.assertFalse(self.piano.finger_states[finger_id])
+        
+        # Check for downward movement (should trigger)
+        should_play = self.piano._detect_finger_movement(finger_id, current_y)
+        self.assertTrue(should_play)
+        
+        # Play note
+        if should_play:
+            self.piano._play_note(finger_id)
+        
+        # Update position
+        self.piano._update_finger_position(finger_id, current_y)
+        
+        # Verify state after press
+        self.assertTrue(self.piano.finger_states[finger_id])
+        self.assertEqual(self.piano.finger_y_positions[finger_id], 0.6)
+        self.piano.sounds['C4'].play.assert_called_once()
+        
+        # Step 2: Finger held down - should NOT re-trigger
+        current_y = 0.6  # still at same position
+        
+        self.piano._reset_finger_state(finger_id, current_y)
+        should_play = self.piano._detect_finger_movement(finger_id, current_y)
+        self.assertFalse(should_play)  # Should not trigger again
+        self.piano._update_finger_position(finger_id, current_y)
+        
+        # State should remain active
+        self.assertTrue(self.piano.finger_states[finger_id])
+        
+        # Step 3: Finger moves up (release) - should reset state
+        current_y = 0.4  # moved up by 0.2 > threshold (0.05)
+        
+        # Check for reset (should happen now)
+        reset_happened = self.piano._reset_finger_state(finger_id, current_y)
+        self.assertTrue(reset_happened)
+        self.assertFalse(self.piano.finger_states[finger_id])
+        
+        # Check for downward movement (shouldn't trigger, moved up)
+        should_play = self.piano._detect_finger_movement(finger_id, current_y)
+        self.assertFalse(should_play)
+        
+        # Update position
+        self.piano._update_finger_position(finger_id, current_y)
+        
+        # Verify state after release
+        self.assertFalse(self.piano.finger_states[finger_id])
+        self.assertEqual(self.piano.finger_y_positions[finger_id], 0.4)
+        
+        # Step 4: Finger moves down again (second press) - should re-trigger
+        current_y = 0.55  # moved down by 0.15 > threshold (0.05)
+        
+        self.piano._reset_finger_state(finger_id, current_y)
+        should_play = self.piano._detect_finger_movement(finger_id, current_y)
+        self.assertTrue(should_play)  # Should trigger again!
+        
+        if should_play:
+            self.piano._play_note(finger_id)
+        
+        self.piano._update_finger_position(finger_id, current_y)
+        
+        # Verify state after second press
+        self.assertTrue(self.piano.finger_states[finger_id])
+        self.assertEqual(self.piano.finger_y_positions[finger_id], 0.55)
+        
+        # Sound should have been played twice total
+        self.assertEqual(self.piano.sounds['C4'].play.call_count, 2)
 
 
 class TestSoundGeneration(unittest.TestCase):
