@@ -84,10 +84,11 @@ class FingerPiano:
         
         # Track finger states (whether each finger is currently playing)
         self.finger_states = [False] * 5
-        self.finger_y_positions = [0.0] * 5
+        self.finger_extensions = [1.0] * 5  # Track finger extension (distance from tip to MCP)
         
-        # Threshold for triggering notes (finger tip y-position change)
-        self.trigger_threshold = self.config.get('trigger_threshold', 0.05)
+        # Threshold for triggering notes (relative change in finger extension)
+        # When finger bends, extension decreases
+        self.trigger_threshold = self.config.get('trigger_threshold', 0.15)
         
         # GUI state
         self.current_screen = None
@@ -156,42 +157,68 @@ class FingerPiano:
         
         return sounds
     
-    def _get_finger_tips(self, hand_landmarks) -> List[Tuple[int, float, float]]:
-        """Extract finger tip positions from hand landmarks.
+    def _get_finger_data(self, hand_landmarks) -> List[Tuple[int, float]]:
+        """Extract finger extension data from hand landmarks.
+        
+        Calculates the distance between fingertip and MCP (knuckle) for each finger.
+        When a finger bends/curls, this distance decreases.
         
         Args:
             hand_landmarks: MediaPipe hand landmarks
             
         Returns:
-            List of tuples (finger_id, x, y) for each finger tip
+            List of tuples (finger_id, extension_distance) for each finger
         """
-        # MediaPipe hand landmark indices for finger tips
-        finger_tip_ids = [4, 8, 12, 16, 20]  # Thumb, Index, Middle, Ring, Pinky
+        # MediaPipe hand landmark indices
+        # Format: (tip_id, mcp_id) for each finger
+        finger_landmarks = [
+            (4, 2),   # Thumb: TIP to MCP
+            (8, 5),   # Index: TIP to MCP
+            (12, 9),  # Middle: TIP to MCP
+            (16, 13), # Ring: TIP to MCP
+            (20, 17)  # Pinky: TIP to MCP
+        ]
         
-        tips = []
-        for i, tip_id in enumerate(finger_tip_ids):
-            landmark = hand_landmarks.landmark[tip_id]
-            tips.append((i, landmark.x, landmark.y))
+        finger_data = []
+        for i, (tip_id, mcp_id) in enumerate(finger_landmarks):
+            tip = hand_landmarks.landmark[tip_id]
+            mcp = hand_landmarks.landmark[mcp_id]
+            
+            # Calculate Euclidean distance between tip and MCP
+            # This represents how extended/straight the finger is
+            dx = tip.x - mcp.x
+            dy = tip.y - mcp.y
+            dz = tip.z - mcp.z
+            extension = np.sqrt(dx*dx + dy*dy + dz*dz)
+            
+            finger_data.append((i, extension))
         
-        return tips
+        return finger_data
     
-    def _detect_finger_movement(self, finger_id: int, current_y: float) -> bool:
-        """Detect if a finger has moved down (like pressing a piano key).
+    def _detect_finger_bending(self, finger_id: int, current_extension: float) -> bool:
+        """Detect if a finger has bent/curled (like pressing a piano key).
+        
+        When a finger bends, the distance between tip and MCP decreases.
         
         Args:
             finger_id: Index of the finger (0-4)
-            current_y: Current y-position of the finger tip
+            current_extension: Current extension distance (tip to MCP)
             
         Returns:
-            True if the finger has moved down significantly
+            True if the finger has bent significantly
         """
-        previous_y = self.finger_y_positions[finger_id]
+        previous_extension = self.finger_extensions[finger_id]
         
-        # Check if finger moved down (y increases downward in image coordinates)
-        movement = current_y - previous_y
+        # Calculate relative change in extension
+        # Negative change means finger is bending (getting shorter)
+        if previous_extension > 0:
+            relative_change = (current_extension - previous_extension) / previous_extension
+        else:
+            relative_change = 0
         
-        # Trigger if moved down and not already playing
-        if movement > self.trigger_threshold and not self.finger_states[finger_id]:
+        # Trigger if finger bent (extension decreased) and not already playing
+        # Negative relative_change means bending
+        if relative_change < -self.trigger_threshold and not self.finger_states[finger_id]:
             return True
         
         return False
@@ -208,33 +235,40 @@ class FingerPiano:
                 self.sounds[chord_name].play()
                 self.finger_states[finger_id] = True
     
-    def _reset_finger_state(self, finger_id: int, current_y: float) -> bool:
-        """Reset finger state when it moves back up.
+    def _reset_finger_state(self, finger_id: int, current_extension: float) -> bool:
+        """Reset finger state when it extends back (straightens).
         
         Args:
             finger_id: Index of the finger (0-4)
-            current_y: Current y-position of the finger tip
+            current_extension: Current extension distance (tip to MCP)
             
         Returns:
             True if the finger state was reset
         """
-        previous_y = self.finger_y_positions[finger_id]
+        previous_extension = self.finger_extensions[finger_id]
         
-        # Reset if finger moved up significantly
-        if current_y < previous_y - self.trigger_threshold:
+        # Calculate relative change in extension
+        if previous_extension > 0:
+            relative_change = (current_extension - previous_extension) / previous_extension
+        else:
+            relative_change = 0
+        
+        # Reset if finger extended (straightened) significantly
+        # Positive relative_change means extending
+        if relative_change > self.trigger_threshold:
             self.finger_states[finger_id] = False
             return True
         
         return False
     
-    def _update_finger_position(self, finger_id: int, current_y: float):
-        """Update the tracked position of a finger.
+    def _update_finger_extension(self, finger_id: int, current_extension: float):
+        """Update the tracked extension of a finger.
         
         Args:
             finger_id: Index of the finger (0-4)
-            current_y: Current y-position of the finger tip
+            current_extension: Current extension distance (tip to MCP)
         """
-        self.finger_y_positions[finger_id] = current_y
+        self.finger_extensions[finger_id] = current_extension
     
     def _draw_ui(self, image, hand_landmarks, image_width: int, image_height: int):
         """Draw UI elements on the image.
@@ -268,7 +302,7 @@ class FingerPiano:
             y_offset += 30
         
         # Draw instructions
-        cv2.putText(image, "Move fingers down to play notes", 
+        cv2.putText(image, "Bend fingers to play notes", 
                    (10, image_height - 20), cv2.FONT_HERSHEY_SIMPLEX,
                    0.7, (255, 255, 255), 2)
         cv2.putText(image, "Press 'q' to quit", 
@@ -305,20 +339,20 @@ class FingerPiano:
                     if results.multi_hand_landmarks:
                         hand_landmarks = results.multi_hand_landmarks[0]
                         
-                        # Get finger tip positions
-                        finger_tips = self._get_finger_tips(hand_landmarks)
+                        # Get finger extension data
+                        finger_data = self._get_finger_data(hand_landmarks)
                         
-                        # Check each finger for movement
-                        for finger_id, x, y in finger_tips:
-                            # Reset state if finger moved up (check before updating position)
-                            self._reset_finger_state(finger_id, y)
+                        # Check each finger for bending
+                        for finger_id, extension in finger_data:
+                            # Reset state if finger extended (check before updating)
+                            self._reset_finger_state(finger_id, extension)
                             
-                            # Detect downward movement and play note
-                            if self._detect_finger_movement(finger_id, y):
+                            # Detect finger bending and play note
+                            if self._detect_finger_bending(finger_id, extension):
                                 self._play_note(finger_id)
                             
-                            # Update position after all checks
-                            self._update_finger_position(finger_id, y)
+                            # Update extension after all checks
+                            self._update_finger_extension(finger_id, extension)
                         
                         # Draw hand landmarks
                         self.mp_drawing.draw_landmarks(
@@ -390,11 +424,11 @@ class FingerPiano:
         )
         
         # Update trigger threshold
-        self.trigger_threshold = self.config.get('trigger_threshold', 0.05)
+        self.trigger_threshold = self.config.get('trigger_threshold', 0.15)
         
         # Reset finger states
         self.finger_states = [False] * 5
-        self.finger_y_positions = [0.0] * 5
+        self.finger_extensions = [1.0] * 5
     
     def cleanup(self):
         """Release resources."""
