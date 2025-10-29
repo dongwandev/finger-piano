@@ -57,8 +57,8 @@ class TestFingerPiano(unittest.TestCase):
         for note in self.piano.NOTE_FREQUENCIES.keys():
             self.assertIn(note, self.piano.sounds)
     
-    def test_finger_tips_extraction(self):
-        """Test finger tip extraction from hand landmarks."""
+    def test_finger_data_extraction(self):
+        """Test finger extension data extraction from hand landmarks."""
         # Mock hand landmarks
         mock_landmarks = Mock()
         mock_landmarks.landmark = []
@@ -68,66 +68,67 @@ class TestFingerPiano(unittest.TestCase):
             landmark = Mock()
             landmark.x = 0.1 * i
             landmark.y = 0.2 * i
+            landmark.z = 0.05 * i
             mock_landmarks.landmark.append(landmark)
         
-        tips = self.piano._get_finger_tips(mock_landmarks)
+        finger_data = self.piano._get_finger_data(mock_landmarks)
         
-        # Should return 5 finger tips
-        self.assertEqual(len(tips), 5)
+        # Should return 5 finger extension values
+        self.assertEqual(len(finger_data), 5)
         
-        # Each tip should have (finger_id, x, y)
-        for i, (finger_id, x, y) in enumerate(tips):
+        # Each entry should have (finger_id, extension)
+        for i, (finger_id, extension) in enumerate(finger_data):
             self.assertEqual(finger_id, i)
-            self.assertIsInstance(x, float)
-            self.assertIsInstance(y, float)
+            self.assertIsInstance(extension, float)
+            self.assertGreater(extension, 0)  # Extension should be positive
     
-    def test_finger_movement_detection(self):
-        """Test finger movement detection logic."""
-        # Initialize positions
-        self.piano.finger_y_positions = [0.5, 0.5, 0.5, 0.5, 0.5]
+    def test_finger_bending_detection(self):
+        """Test finger bending detection logic."""
+        # Initialize extensions (fully extended fingers)
+        self.piano.finger_extensions = [0.2, 0.2, 0.2, 0.2, 0.2]
         self.piano.finger_states = [False, False, False, False, False]
         
-        # Test downward movement (should trigger)
-        result = self.piano._detect_finger_movement(0, 0.6)
+        # Test significant bending (20% decrease, should trigger with 15% threshold)
+        result = self.piano._detect_finger_bending(0, 0.16)
         self.assertTrue(result)
         
-        # Test small movement (should not trigger)
+        # Test small bending (10% decrease, should not trigger with 15% threshold)
         self.piano.finger_states[1] = False
-        result = self.piano._detect_finger_movement(1, 0.52)
+        result = self.piano._detect_finger_bending(1, 0.18)
         self.assertFalse(result)
         
-        # Test upward movement (should not trigger)
+        # Test extending (should not trigger)
         self.piano.finger_states[2] = False
-        result = self.piano._detect_finger_movement(2, 0.4)
+        result = self.piano._detect_finger_bending(2, 0.25)
         self.assertFalse(result)
     
     def test_finger_state_reset(self):
-        """Test finger state reset on upward movement."""
-        # Set initial state
-        self.piano.finger_y_positions = [0.6, 0.6, 0.6, 0.6, 0.6]
+        """Test finger state reset on extending (straightening)."""
+        # Set initial state (fingers bent)
+        self.piano.finger_extensions = [0.16, 0.16, 0.16, 0.16, 0.16]
         self.piano.finger_states = [True, True, True, True, True]
         
-        # Test upward movement (should reset)
-        self.piano._reset_finger_state(0, 0.5)
+        # Test significant extension (25% increase, should reset with 15% threshold)
+        self.piano._reset_finger_state(0, 0.20)
         self.assertFalse(self.piano.finger_states[0])
         
-        # Test small upward movement (should not reset)
+        # Test small extension (10% increase, should not reset with 15% threshold)
         self.piano.finger_states[1] = True
-        self.piano._reset_finger_state(1, 0.58)
+        self.piano._reset_finger_state(1, 0.176)
         self.assertTrue(self.piano.finger_states[1])
     
     def test_initial_state(self):
         """Test that initial state is correct."""
         self.assertEqual(len(self.piano.finger_states), 5)
-        self.assertEqual(len(self.piano.finger_y_positions), 5)
+        self.assertEqual(len(self.piano.finger_extensions), 5)
         
         # All fingers should start inactive
         for state in self.piano.finger_states:
             self.assertFalse(state)
         
-        # All positions should start at 0
-        for pos in self.piano.finger_y_positions:
-            self.assertEqual(pos, 0.0)
+        # All extensions should start at 1.0
+        for ext in self.piano.finger_extensions:
+            self.assertEqual(ext, 1.0)
     
     def test_play_note(self):
         """Test note playing functionality."""
@@ -146,12 +147,12 @@ class TestFingerPiano(unittest.TestCase):
         self.piano.sounds[note].play.assert_called_once()
     
     def test_press_release_press_cycle(self):
-        """Test complete press-release-press cycle for finger recognition.
+        """Test complete bend-extend-bend cycle for finger recognition.
         
         This test verifies that:
-        1. Finger press triggers note
-        2. Finger release resets state
-        3. Finger can be pressed again to re-trigger note
+        1. Finger bending triggers note
+        2. Finger extending resets state
+        3. Finger can be bent again to re-trigger note
         """
         # Mock the sound playing
         for note in self.piano.sounds:
@@ -159,78 +160,78 @@ class TestFingerPiano(unittest.TestCase):
         
         finger_id = 0
         
-        # Initial state: finger at rest position
-        self.piano.finger_y_positions[finger_id] = 0.5
+        # Initial state: finger at extended position
+        self.piano.finger_extensions[finger_id] = 0.2
         self.piano.finger_states[finger_id] = False
         
-        # Step 1: Finger moves down (press) - should trigger
-        current_y = 0.6  # moved down by 0.1 > threshold (0.05)
+        # Step 1: Finger bends (extension decreases by 20%) - should trigger
+        current_extension = 0.16  # 20% decrease > threshold (15%)
         
-        # Check for reset (shouldn't happen, finger moved down)
-        self.piano._reset_finger_state(finger_id, current_y)
+        # Check for reset (shouldn't happen, finger bent)
+        self.piano._reset_finger_state(finger_id, current_extension)
         self.assertFalse(self.piano.finger_states[finger_id])
         
-        # Check for downward movement (should trigger)
-        should_play = self.piano._detect_finger_movement(finger_id, current_y)
+        # Check for bending (should trigger)
+        should_play = self.piano._detect_finger_bending(finger_id, current_extension)
         self.assertTrue(should_play)
         
         # Play note
         if should_play:
             self.piano._play_note(finger_id)
         
-        # Update position
-        self.piano._update_finger_position(finger_id, current_y)
+        # Update extension
+        self.piano._update_finger_extension(finger_id, current_extension)
         
-        # Verify state after press
+        # Verify state after bending
         self.assertTrue(self.piano.finger_states[finger_id])
-        self.assertEqual(self.piano.finger_y_positions[finger_id], 0.6)
+        self.assertEqual(self.piano.finger_extensions[finger_id], 0.16)
         self.piano.sounds['C4'].play.assert_called_once()
         
-        # Step 2: Finger held down - should NOT re-trigger
-        current_y = 0.6  # still at same position
+        # Step 2: Finger held bent - should NOT re-trigger
+        current_extension = 0.16  # still at same extension
         
-        self.piano._reset_finger_state(finger_id, current_y)
-        should_play = self.piano._detect_finger_movement(finger_id, current_y)
+        self.piano._reset_finger_state(finger_id, current_extension)
+        should_play = self.piano._detect_finger_bending(finger_id, current_extension)
         self.assertFalse(should_play)  # Should not trigger again
-        self.piano._update_finger_position(finger_id, current_y)
+        self.piano._update_finger_extension(finger_id, current_extension)
         
         # State should remain active
         self.assertTrue(self.piano.finger_states[finger_id])
         
-        # Step 3: Finger moves up (release) - should reset state
-        current_y = 0.4  # moved up by 0.2 > threshold (0.05)
+        # Step 3: Finger extends (straightens) - should reset state
+        current_extension = 0.20  # 25% increase > threshold (15%)
         
         # Check for reset (should happen now)
-        reset_happened = self.piano._reset_finger_state(finger_id, current_y)
+        reset_happened = self.piano._reset_finger_state(finger_id, current_extension)
         self.assertTrue(reset_happened)
         self.assertFalse(self.piano.finger_states[finger_id])
         
-        # Check for downward movement (shouldn't trigger, moved up)
-        should_play = self.piano._detect_finger_movement(finger_id, current_y)
+        # Check for bending (shouldn't trigger, finger extended)
+        should_play = self.piano._detect_finger_bending(finger_id, current_extension)
         self.assertFalse(should_play)
         
-        # Update position
-        self.piano._update_finger_position(finger_id, current_y)
+        # Update extension
+        self.piano._update_finger_extension(finger_id, current_extension)
         
-        # Verify state after release
+        # Verify state after extending
         self.assertFalse(self.piano.finger_states[finger_id])
-        self.assertEqual(self.piano.finger_y_positions[finger_id], 0.4)
+        self.assertEqual(self.piano.finger_extensions[finger_id], 0.20)
         
-        # Step 4: Finger moves down again (second press) - should re-trigger
-        current_y = 0.55  # moved down by 0.15 > threshold (0.05)
+        # Step 4: Finger bends again (second bend) - should re-trigger
+        current_extension = 0.16  # 20% decrease > threshold (15%)
         
-        self.piano._reset_finger_state(finger_id, current_y)
-        should_play = self.piano._detect_finger_movement(finger_id, current_y)
+        self.piano._reset_finger_state(finger_id, current_extension)
+        should_play = self.piano._detect_finger_bending(finger_id, current_extension)
         self.assertTrue(should_play)  # Should trigger again!
         
         if should_play:
             self.piano._play_note(finger_id)
         
-        self.piano._update_finger_position(finger_id, current_y)
+        self.piano._update_finger_extension(finger_id, current_extension)
         
-        # Verify state after second press
+        # Verify state after second bend
         self.assertTrue(self.piano.finger_states[finger_id])
-        self.assertEqual(self.piano.finger_y_positions[finger_id], 0.55)
+        self.assertEqual(self.piano.finger_extensions[finger_id], 0.16)
         
         # Sound should have been played twice total
         self.assertEqual(self.piano.sounds['C4'].play.call_count, 2)
@@ -283,7 +284,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.get('instrument'), 'piano')
         self.assertEqual(config.get('min_detection_confidence'), 0.7)
         self.assertEqual(config.get('min_tracking_confidence'), 0.5)
-        self.assertEqual(config.get('trigger_threshold'), 0.05)
+        self.assertEqual(config.get('trigger_threshold'), 0.15)
     
     def test_save_and_load(self):
         """Test saving and loading configuration."""

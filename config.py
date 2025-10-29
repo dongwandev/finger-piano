@@ -17,7 +17,7 @@ class Config:
         'instrument': 'piano',
         'min_detection_confidence': 0.7,
         'min_tracking_confidence': 0.5,
-        'trigger_threshold': 0.05,
+        'trigger_threshold': 0.15,
     }
     
     INSTRUMENTS = ['piano', 'guitar', 'electric_guitar', 'violin']
