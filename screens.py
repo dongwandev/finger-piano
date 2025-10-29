@@ -175,8 +175,8 @@ class SettingsScreen(Screen):
              'values': [0.5, 0.6, 0.7, 0.8, 0.9]},
             {'label': 'Tracking Confidence', 'type': 'tracking',
              'values': [0.3, 0.4, 0.5, 0.6, 0.7]},
-            {'label': 'Trigger Threshold', 'type': 'trigger',
-             'values': [0.10, 0.12, 0.15, 0.18, 0.20]},
+            {'label': 'Sensitivity (Lower=More sensitive)', 'type': 'trigger',
+             'values': [0.10, 0.15, 0.20, 0.25, 0.30]},
             {'label': 'Save & Return', 'type': 'save'},
             {'label': 'Cancel', 'type': 'cancel'}
         ]
@@ -378,7 +378,7 @@ class SettingsScreen(Screen):
         elif opt_type == 'tracking':
             return f"{self.config.get('min_tracking_confidence', 0.5):.1f}"
         elif opt_type == 'trigger':
-            return f"{self.config.get('trigger_threshold', 0.05):.2f}"
+            return f"{self.config.get('trigger_threshold', 0.15):.2f}"
         elif opt_type in ['save', 'cancel']:
             return "[Press ENTER]"
         
