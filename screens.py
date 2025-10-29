@@ -100,7 +100,7 @@ class LobbyScreen(Screen):
         title = "Finger Piano"
         title_emoji = "🎹✋"
         cv2.putText(canvas, title, (width // 2 - 200, 150),
-                   cv2.FONT_HERSHEY_BOLD, 2.5, (255, 255, 255), 4)
+                   cv2.FONT_HERSHEY_DUPLEX, 2.5, (255, 255, 255), 4)
         
         # Draw subtitle
         subtitle = "Play piano with your fingers!"
@@ -315,7 +315,7 @@ class SettingsScreen(Screen):
         
         # Draw title
         cv2.putText(canvas, "Settings", (50, 80),
-                   cv2.FONT_HERSHEY_BOLD, 2.0, (255, 255, 255), 3)
+                   cv2.FONT_HERSHEY_DUPLEX, 2.0, (255, 255, 255), 3)
         
         # Draw options
         y_offset = 160
