@@ -17,14 +17,24 @@ from screens import LobbyScreen, SettingsScreen, PlayScreen
 class FingerPiano:
     """Main class for the finger piano virtual instrument."""
     
-    # Piano key mapping for fingers (C major scale)
+    # Piano key mapping for fingers (chords instead of single notes)
     # Index: 0=thumb, 1=index, 2=middle, 3=ring, 4=pinky
-    NOTES = ['C4', 'D4', 'E4', 'F4', 'G4']
+    NOTES = ['C Major', 'G Major', 'A Minor', 'F Major', 'D Major']
     
-    # MIDI note frequencies
+    # Chord definitions (note names for each chord)
+    CHORDS = {
+        'C Major': ['C4', 'E4', 'G4'],       # C, E, G
+        'G Major': ['G4', 'B4', 'D5'],       # G, B, D
+        'A Minor': ['A4', 'C5', 'E5'],       # A, C, E
+        'F Major': ['F4', 'A4', 'C5'],       # F, A, C
+        'D Major': ['D4', 'F#4', 'A4']       # D, F#, A
+    }
+    
+    # MIDI note frequencies (expanded to include all notes needed for chords)
     NOTE_FREQUENCIES = {
         'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23,
-        'G4': 392.00, 'A4': 440.00, 'B4': 493.88, 'C5': 523.25
+        'F#4': 369.99, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88, 
+        'C5': 523.25, 'D5': 587.33, 'E5': 659.25
     }
     
     # Colors for visualization
@@ -85,15 +95,17 @@ class FingerPiano:
         self.screens = {}
         
     def _generate_piano_sounds(self) -> dict:
-        """Generate synthesized piano sounds for each note.
+        """Generate synthesized piano sounds for each chord.
         
         Returns:
-            Dictionary mapping note names to pygame Sound objects
+            Dictionary mapping chord names to pygame Sound objects
         """
         sounds = {}
         sample_rate = 22050
         duration = 0.5  # seconds
         
+        # First, generate individual note waves
+        note_waves = {}
         for note, frequency in self.NOTE_FREQUENCIES.items():
             # Generate a simple sine wave with ADSR envelope
             samples = int(sample_rate * duration)
@@ -119,17 +131,30 @@ class FingerPiano:
                 wave[i] += 0.3 * envelope * np.sin(4 * np.pi * frequency * t)
                 wave[i] += 0.1 * envelope * np.sin(6 * np.pi * frequency * t)
             
+            note_waves[note] = wave
+        
+        # Now combine notes into chords
+        for chord_name, chord_notes in self.CHORDS.items():
+            samples = int(sample_rate * duration)
+            chord_wave = np.zeros(samples)
+            
+            # Add all notes in the chord together
+            for note in chord_notes:
+                if note not in note_waves:
+                    raise ValueError(f"Note '{note}' in chord '{chord_name}' not found in NOTE_FREQUENCIES")
+                chord_wave += note_waves[note] * 0.7  # Scale to prevent clipping while maintaining volume
+            
             # Normalize and convert to 16-bit integers
-            if np.max(np.abs(wave)) > 0:
-                wave = wave / np.max(np.abs(wave))
-            wave = (wave * 32767).astype(np.int16)
+            if np.max(np.abs(chord_wave)) > 0:
+                chord_wave = chord_wave / np.max(np.abs(chord_wave))
+            chord_wave = (chord_wave * 32767).astype(np.int16)
             
             # Create stereo sound
-            stereo_wave = np.column_stack((wave, wave))
+            stereo_wave = np.column_stack((chord_wave, chord_wave))
             
             # Create pygame Sound object
-            sounds[note] = pygame.sndarray.make_sound(stereo_wave)
-            
+            sounds[chord_name] = pygame.sndarray.make_sound(stereo_wave)
+        
         return sounds
     
     def _get_finger_data(self, hand_landmarks) -> List[Tuple[int, float]]:
@@ -199,15 +224,15 @@ class FingerPiano:
         return False
     
     def _play_note(self, finger_id: int):
-        """Play the note associated with a finger.
+        """Play the chord associated with a finger.
         
         Args:
             finger_id: Index of the finger (0-4)
         """
         if finger_id < len(self.NOTES):
-            note = self.NOTES[finger_id]
-            if note in self.sounds:
-                self.sounds[note].play()
+            chord_name = self.NOTES[finger_id]
+            if chord_name in self.sounds:
+                self.sounds[chord_name].play()
                 self.finger_states[finger_id] = True
     
     def _reset_finger_state(self, finger_id: int, current_extension: float) -> bool:

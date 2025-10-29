@@ -43,19 +43,23 @@ class TestFingerPiano(unittest.TestCase):
     
     def test_note_frequencies(self):
         """Test that all expected notes have frequencies defined."""
-        expected_notes = ['C4', 'D4', 'E4', 'F4', 'G4']
+        # Check that all notes needed for chords are in NOTE_FREQUENCIES
+        all_needed_notes = set()
+        for chord_notes in FingerPiano.CHORDS.values():
+            all_needed_notes.update(chord_notes)
         
-        for note in expected_notes:
+        for note in all_needed_notes:
             self.assertIn(note, FingerPiano.NOTE_FREQUENCIES)
             self.assertIsInstance(FingerPiano.NOTE_FREQUENCIES[note], (int, float))
             self.assertGreater(FingerPiano.NOTE_FREQUENCIES[note], 0)
     
     def test_sound_generation(self):
-        """Test that piano sounds are generated for all notes."""
+        """Test that piano sounds are generated for all chords."""
         self.assertIsNotNone(self.piano.sounds)
         
-        for note in self.piano.NOTE_FREQUENCIES.keys():
-            self.assertIn(note, self.piano.sounds)
+        # Check that sounds were generated for all chords
+        for chord_name in self.piano.CHORDS.keys():
+            self.assertIn(chord_name, self.piano.sounds)
     
     def test_finger_data_extraction(self):
         """Test finger extension data extraction from hand landmarks."""
@@ -132,31 +136,31 @@ class TestFingerPiano(unittest.TestCase):
     
     def test_play_note(self):
         """Test note playing functionality."""
-        # Mock the sound playing
-        for note in self.piano.sounds:
-            self.piano.sounds[note] = Mock()
+        # Mock the sound playing for chords
+        for chord_name in self.piano.sounds:
+            self.piano.sounds[chord_name] = Mock()
         
-        # Play note for finger 0
+        # Play chord for finger 0 (C Major)
         self.piano._play_note(0)
         
         # Check that state is updated
         self.assertTrue(self.piano.finger_states[0])
         
-        # Check that sound was played
-        note = self.piano.NOTES[0]
-        self.piano.sounds[note].play.assert_called_once()
+        # Check that chord sound was played
+        chord = self.piano.NOTES[0]
+        self.piano.sounds[chord].play.assert_called_once()
     
     def test_press_release_press_cycle(self):
         """Test complete bend-extend-bend cycle for finger recognition.
         
         This test verifies that:
-        1. Finger bending triggers note
+        1. Finger bending triggers chord
         2. Finger extending resets state
-        3. Finger can be bent again to re-trigger note
+        3. Finger can be bent again to re-trigger chord
         """
-        # Mock the sound playing
-        for note in self.piano.sounds:
-            self.piano.sounds[note] = Mock()
+        # Mock the sound playing for chords
+        for chord_name in self.piano.sounds:
+            self.piano.sounds[chord_name] = Mock()
         
         finger_id = 0
         
@@ -175,7 +179,7 @@ class TestFingerPiano(unittest.TestCase):
         should_play = self.piano._detect_finger_bending(finger_id, current_extension)
         self.assertTrue(should_play)
         
-        # Play note
+        # Play chord
         if should_play:
             self.piano._play_note(finger_id)
         
@@ -185,7 +189,7 @@ class TestFingerPiano(unittest.TestCase):
         # Verify state after bending
         self.assertTrue(self.piano.finger_states[finger_id])
         self.assertEqual(self.piano.finger_extensions[finger_id], 0.16)
-        self.piano.sounds['C4'].play.assert_called_once()
+        self.piano.sounds['C Major'].play.assert_called_once()
         
         # Step 2: Finger held bent - should NOT re-trigger
         current_extension = 0.16  # still at same extension
@@ -234,18 +238,18 @@ class TestFingerPiano(unittest.TestCase):
         self.assertEqual(self.piano.finger_extensions[finger_id], 0.16)
         
         # Sound should have been played twice total
-        self.assertEqual(self.piano.sounds['C4'].play.call_count, 2)
+        self.assertEqual(self.piano.sounds['C Major'].play.call_count, 2)
     
     def test_thumb_bending_detection(self):
         """Test that thumb bending is properly detected with new algorithm.
         
-        This specifically tests that thumb (finger_id=0) can trigger notes
+        This specifically tests that thumb (finger_id=0) can trigger chords
         by bending, regardless of x-axis or y-axis movement. This addresses
         the issue where y-axis-only detection failed for thumbs.
         """
         # Mock the sound playing
-        for note in self.piano.sounds:
-            self.piano.sounds[note] = Mock()
+        for chord_name in self.piano.sounds:
+            self.piano.sounds[chord_name] = Mock()
         
         finger_id = 0  # Thumb
         
@@ -259,16 +263,16 @@ class TestFingerPiano(unittest.TestCase):
         bent_extension = 0.20  # 20% decrease
         
         should_play = self.piano._detect_finger_bending(finger_id, bent_extension)
-        self.assertTrue(should_play, "Thumb bending should trigger note")
+        self.assertTrue(should_play, "Thumb bending should trigger chord")
         
         if should_play:
             self.piano._play_note(finger_id)
         
         self.piano._update_finger_extension(finger_id, bent_extension)
         
-        # Verify thumb note (C4) was played
+        # Verify thumb chord (C Major) was played
         self.assertTrue(self.piano.finger_states[finger_id])
-        self.piano.sounds['C4'].play.assert_called_once()
+        self.piano.sounds['C Major'].play.assert_called_once()
         
         # Thumb extends back - should reset
         extended_extension = 0.25  # Back to original

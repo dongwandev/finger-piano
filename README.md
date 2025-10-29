@@ -15,11 +15,11 @@ The application now features a multi-screen GUI with lobby, settings, and play s
   - ⚙️ **Settings Screen** - Configure camera, instrument, and detection sensitivity
   - 🎮 **Play Screen** - Interactive performance interface
 - **Real-time hand tracking** using MediaPipe
-- **Gesture-based piano playing** - bend/curl fingers to play notes
+- **Gesture-based piano playing** - bend/curl fingers to play chords
 - **Improved finger bending detection** - works reliably for all fingers including thumb
 - **Visual feedback** showing which fingers are active
 - **Synthesized piano sounds** for a rich musical experience
-- **5 fingers mapped to 5 piano notes** (C major scale: C4, D4, E4, F4, G4)
+- **5 fingers mapped to 5 chords** (C Major, G Major, A Minor, F Major, D Major)
 - **Configurable settings** with persistent storage
 - **Multiple instrument support** (Piano, Guitar, Electric Guitar, Violin)
 - **Adjustable sensitivity** for detection and tracking confidence
@@ -94,13 +94,13 @@ The performance interface shows:
 1. Start the application and select **Start Playing** from the lobby
 2. Position your hand in front of the webcam
 3. Keep your palm facing the camera
-4. **Bend/curl your fingers** (like pressing piano keys) to play notes
-5. Each finger corresponds to a different note:
-   - **Thumb** → C4
-   - **Index finger** → D4
-   - **Middle finger** → E4
-   - **Ring finger** → F4
-   - **Pinky** → G4
+4. **Bend/curl your fingers** (like pressing piano keys) to play chords
+5. Each finger corresponds to a different chord:
+   - **Thumb** → C Major (C, E, G)
+   - **Index finger** → G Major (G, B, D)
+   - **Middle finger** → A Minor (A, C, E)
+   - **Ring finger** → F Major (F, A, C)
+   - **Pinky** → D Major (D, F#, A)
 
 6. Press **Q** or **ESC** to return to the lobby
 
@@ -108,11 +108,11 @@ The performance interface shows:
 
 - Ensure good lighting for better hand detection
 - Keep your hand clearly visible to the camera
-- **Curl/bend your fingers deliberately** for best note triggering
+- **Curl/bend your fingers deliberately** for best chord triggering
 - Experiment with different hand positions and movements
 - The thumb now works reliably with the bending detection algorithm
 - Adjust detection and tracking confidence in settings if hand detection is unstable
-- Adjust trigger threshold in settings to change how much finger bending is needed to trigger notes
+- Adjust trigger threshold in settings to change how much finger bending is needed to trigger chords
 - Test your camera in the settings screen before playing to ensure it's working properly
 
 ## Technical Details
@@ -129,8 +129,8 @@ The performance interface shows:
 1. **Hand Detection**: MediaPipe detects hand landmarks in real-time from webcam feed
 2. **Finger Tracking**: Tracks finger joint positions (fingertips and MCP knuckles)
 3. **Bending Detection**: Measures 3D Euclidean distance between fingertip and MCP joint for each finger
-4. **Note Triggering**: When a finger bends (distance decreases by threshold %), plays the corresponding note
-5. **Sound Synthesis**: Generates piano-like sounds using sine waves with ADSR envelope
+4. **Chord Triggering**: When a finger bends (distance decreases by threshold %), plays the corresponding chord
+5. **Sound Synthesis**: Generates piano-like chord sounds by combining multiple sine waves with ADSR envelope
 6. **Configuration Management**: Saves user preferences to a JSON file for persistence across sessions
 7. **Multi-Screen GUI**: Provides intuitive navigation between lobby, settings, and play screens
 
@@ -139,7 +139,7 @@ The performance interface shows:
 The new **finger bending detection** algorithm:
 - Calculates the 3D distance between each fingertip and its corresponding MCP (knuckle) joint
 - When a finger curls/bends, this distance decreases
-- Triggers a note when the relative distance change exceeds the threshold (default: 15%)
+- Triggers a chord when the relative distance change exceeds the threshold (default: 15%)
 - Works for all fingers including the thumb (which moves primarily in x-axis)
 - More reliable than the previous y-axis movement detection
 
@@ -151,7 +151,7 @@ Settings are automatically saved to `finger_piano_config.json` in the applicatio
 - **instrument**: Selected instrument (default: 'piano')
 - **min_detection_confidence**: Hand detection confidence threshold (default: 0.7)
 - **min_tracking_confidence**: Hand tracking confidence threshold (default: 0.5)
-- **trigger_threshold**: Finger bending threshold for note triggering (default: 0.15)
+- **trigger_threshold**: Finger bending threshold for chord triggering (default: 0.15)
 
 You can manually edit this file if needed, or use the Settings screen in the application.
 
