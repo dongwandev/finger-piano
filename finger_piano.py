@@ -17,7 +17,7 @@ class FingerPiano:
     
     # Piano key mapping for fingers (C major scale)
     # Index: 0=thumb, 1=index, 2=middle, 3=ring, 4=pinky
-    NOTES = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
+    NOTES = ['C4', 'D4', 'E4', 'F4', 'G4']
     
     # MIDI note frequencies
     NOTE_FREQUENCIES = {
@@ -109,7 +109,8 @@ class FingerPiano:
                 wave[i] += 0.1 * envelope * np.sin(6 * np.pi * frequency * t)
             
             # Normalize and convert to 16-bit integers
-            wave = wave / np.max(np.abs(wave))
+            if np.max(np.abs(wave)) > 0:
+                wave = wave / np.max(np.abs(wave))
             wave = (wave * 32767).astype(np.int16)
             
             # Create stereo sound

@@ -12,7 +12,7 @@ Finger Piano uses computer vision and hand tracking to create an interactive mus
 - **Gesture-based piano playing** - move fingers down to play notes
 - **Visual feedback** showing which fingers are active
 - **Synthesized piano sounds** for a rich musical experience
-- **5 fingers mapped to 8 piano notes** (C major scale: C4, D4, E4, F4, G4, A4, B4, C5)
+- **5 fingers mapped to 5 piano notes** (C major scale: C4, D4, E4, F4, G4)
 
 ## Requirements
 

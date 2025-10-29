@@ -39,7 +39,7 @@ class TestFingerPiano(unittest.TestCase):
     
     def test_note_frequencies(self):
         """Test that all expected notes have frequencies defined."""
-        expected_notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5']
+        expected_notes = ['C4', 'D4', 'E4', 'F4', 'G4']
         
         for note in expected_notes:
             self.assertIn(note, FingerPiano.NOTE_FREQUENCIES)
