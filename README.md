@@ -1,186 +1,186 @@
 # Finger Piano 🎹✋
 
-A virtual instrument program that recognizes finger joints as landmarks and plays piano sounds as your fingers move.
+손가락 관절을 랜드마크로 인식하여 손가락 움직임에 따라 피아노 소리를 재생하는 가상 악기 프로그램입니다.
 
-## Description
+## 설명
 
-Finger Piano uses computer vision and hand tracking to create an interactive musical instrument. By detecting your hand landmarks through your webcam, it maps finger movements to piano keys, allowing you to play music with natural hand gestures.
+Finger Piano는 컴퓨터 비전과 손 추적 기술을 사용하여 인터랙티브한 악기를 만듭니다. 웹캠을 통해 손의 랜드마크를 감지하여 손가락 움직임을 피아노 건반에 매핑하므로 자연스러운 손동작으로 음악을 연주할 수 있습니다.
 
-The application now features a multi-screen GUI with lobby, settings, and play screens for an enhanced user experience.
+이 애플리케이션은 이제 로비, 설정, 연주 화면이 있는 다중 화면 GUI를 제공하여 향상된 사용자 경험을 제공합니다.
 
-### Features
+### 주요 기능
 
-- **Multi-screen GUI** with easy navigation
-  - 🏠 **Lobby Screen** - Main menu to start playing or adjust settings
-  - ⚙️ **Settings Screen** - Configure camera, instrument, and detection sensitivity
-  - 🎮 **Play Screen** - Interactive performance interface
-- **Real-time hand tracking** using MediaPipe
-- **Gesture-based piano playing** - bend/curl fingers to play chords
-- **Improved finger bending detection** - works reliably for all fingers including thumb
-- **Visual feedback** showing which fingers are active
-- **Synthesized piano sounds** for a rich musical experience
-- **Customizable chord presets** - Choose from 4 different chord configurations
-  - Default preset with 5 chords (all fingers)
-  - 3 alternative presets with 3-4 chords (some fingers unassigned)
-- **Configurable settings** with persistent storage
-- **Multiple instrument support** (Piano, Guitar, Electric Guitar, Violin)
-- **Adjustable sensitivity** for detection and tracking confidence
+- 쉬운 탐색이 가능한 **다중 화면 GUI**
+  - 🏠 **로비 화면** - 연주를 시작하거나 설정을 조정하는 메인 메뉴
+  - ⚙️ **설정 화면** - 카메라, 악기 및 감지 민감도 구성
+  - 🎮 **연주 화면** - 인터랙티브 연주 인터페이스
+- MediaPipe를 사용한 **실시간 손 추적**
+- **제스처 기반 피아노 연주** - 손가락을 구부려서 화음 연주
+- **개선된 손가락 구부림 감지** - 엄지를 포함한 모든 손가락에서 안정적으로 작동
+- 어떤 손가락이 활성화되어 있는지 보여주는 **시각적 피드백**
+- 풍부한 음악 경험을 위한 **합성 피아노 사운드**
+- **커스터마이징 가능한 화음 프리셋** - 4가지 화음 구성 중 선택 가능
+  - 5개 화음의 기본 프리셋 (모든 손가락)
+  - 3-4개 화음의 3가지 대체 프리셋 (일부 손가락 미할당)
+- 영구 저장이 가능한 **설정 구성**
+- **다양한 악기 지원** (피아노, 기타, 일렉트릭 기타, 바이올린)
+- 감지 및 추적 신뢰도에 대한 **조정 가능한 민감도**
 
-## Requirements
+## 요구사항
 
-- Python 3.7 or higher
-- Webcam
-- Operating System: Windows, macOS, or Linux
+- Python 3.7 이상
+- 웹캠
+- 운영체제: Windows, macOS 또는 Linux
 
-## Installation
+## 설치
 
-1. Clone the repository:
+1. 저장소를 복제합니다:
 ```bash
 git clone https://github.com/dongwandev/finger-piano.git
 cd finger-piano
 ```
 
-2. Install dependencies:
+2. 의존성을 설치합니다:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+## 사용법
 
-Run the finger piano application:
+핑거 피아노 애플리케이션을 실행합니다:
 ```bash
 python finger_piano.py
 ```
 
-### Navigating the Application
+### 애플리케이션 탐색
 
-#### 🏠 Lobby Screen
-When you start the application, you'll see the lobby screen with the following options:
-- **Start Playing** - Begin performing with the finger piano
-- **Settings** - Configure application settings
-- **Quit** - Exit the application
+#### 🏠 로비 화면
+애플리케이션을 시작하면 다음 옵션이 있는 로비 화면이 표시됩니다:
+- **연주 시작** - 핑거 피아노로 연주 시작
+- **설정** - 애플리케이션 설정 구성
+- **종료** - 애플리케이션 종료
 
-**Navigation:**
-- Use **UP/DOWN arrow keys** or **W/S** to navigate menu options
-- Press **ENTER** or **SPACE** to select an option
-- Press **1** to quickly start playing, **2** for settings
-- Press **Q** or **ESC** to quit
+**탐색 방법:**
+- **위/아래 화살표 키** 또는 **W/S**를 사용하여 메뉴 옵션 탐색
+- **ENTER** 또는 **SPACE**를 눌러 옵션 선택
+- **1**을 눌러 빠르게 연주 시작, **2**는 설정으로 이동
+- **Q** 또는 **ESC**를 눌러 종료
 
-#### ⚙️ Settings Screen
-Configure the application to your preferences:
-- **Camera ID** - Select camera device (0: built-in, 1-2: USB cameras)
-- **Test Camera** - Preview the selected camera feed
-- **Instrument** - Choose between Piano, Guitar, Electric Guitar, or Violin
-- **Chord Preset** - Select chord configuration for each finger:
-  - **Default** - C Major, G Major, A Minor, F Major, D Major (all fingers assigned)
-  - **Preset 1** - G Major, D Major, E Minor, C Major (pinky unassigned)
-  - **Preset 2** - A Minor, C Major, G Major, D Major (pinky unassigned)
-  - **Preset 3** - E Major, A Minor, A Sus4 (ring and pinky unassigned)
-  - *Note: Unassigned fingers produce no sound when bent*
-- **Detection Confidence** - Adjust hand detection sensitivity (0.5-0.9)
-- **Tracking Confidence** - Adjust hand tracking sensitivity (0.3-0.7)
-- **Sensitivity** - Adjust finger bending sensitivity (0.10-0.30)
-  - **Lower values = More sensitive** (easier to trigger chords)
-  - **Higher values = Less sensitive** (requires more finger bending)
+#### ⚙️ 설정 화면
+원하는 대로 애플리케이션을 구성합니다:
+- **카메라 ID** - 카메라 장치 선택 (0: 내장, 1-2: USB 카메라)
+- **카메라 테스트** - 선택한 카메라 피드 미리보기
+- **악기** - 피아노, 기타, 일렉트릭 기타 또는 바이올린 중 선택
+- **화음 프리셋** - 각 손가락에 대한 화음 구성 선택:
+  - **기본** - C Major, G Major, A Minor, F Major, D Major (모든 손가락 할당됨)
+  - **프리셋 1** - G Major, D Major, E Minor, C Major (새끼손가락 미할당)
+  - **프리셋 2** - A Minor, C Major, G Major, D Major (새끼손가락 미할당)
+  - **프리셋 3** - E Major, A Minor, A Sus4 (약지와 새끼손가락 미할당)
+  - *참고: 미할당된 손가락을 구부려도 소리가 나지 않습니다*
+- **감지 신뢰도** - 손 감지 민감도 조정 (0.5-0.9)
+- **추적 신뢰도** - 손 추적 민감도 조정 (0.3-0.7)
+- **민감도** - 손가락 구부림 민감도 조정 (0.10-0.30)
+  - **낮은 값 = 더 민감함** (화음 트리거가 쉬움)
+  - **높은 값 = 덜 민감함** (더 많은 손가락 구부림 필요)
 
-**Navigation:**
-- Use **UP/DOWN arrow keys** or **W/S** to navigate options
-- Use **LEFT/RIGHT arrow keys** or **A/D** to change values
-- Press **ENTER** or **SPACE** to activate options (e.g., test camera)
-- Select **Save & Return** to save changes and return to lobby
-- Select **Cancel** or press **Q/ESC** to return without saving
+**탐색 방법:**
+- **위/아래 화살표 키** 또는 **W/S**를 사용하여 옵션 탐색
+- **좌/우 화살표 키** 또는 **A/D**를 사용하여 값 변경
+- **ENTER** 또는 **SPACE**를 눌러 옵션 활성화 (예: 카메라 테스트)
+- **저장 및 돌아가기**를 선택하여 변경사항 저장 후 로비로 돌아가기
+- **취소**를 선택하거나 **Q/ESC**를 눌러 저장하지 않고 돌아가기
 
-#### 🎮 Play Screen
-The performance interface shows:
-- **Camera feed** with hand tracking visualization
-- **Top-left corner** - Finger status (which fingers are active)
-- **Top-right corner** - Current instrument selection
+#### 🎮 연주 화면
+연주 인터페이스는 다음을 표시합니다:
+- 손 추적 시각화가 포함된 **카메라 피드**
+- **왼쪽 상단** - 손가락 상태 (어떤 손가락이 활성화되어 있는지)
+- **오른쪽 상단** - 현재 악기 선택
 
-**Navigation:**
-- Press **Q** or **ESC** to return to the lobby
+**탐색 방법:**
+- **Q** 또는 **ESC**를 눌러 로비로 돌아가기
 
-### How to Play
+### 연주 방법
 
-1. Start the application and select **Start Playing** from the lobby
-2. Position your hand in front of the webcam
-3. Keep your palm facing the camera
-4. **Bend/curl your fingers** (like pressing piano keys) to play chords
-5. Each finger corresponds to a different chord (default preset):
-   - **Thumb** → C Major (C, E, G)
-   - **Index finger** → G Major (G, B, D)
-   - **Middle finger** → A Minor (A, C, E)
-   - **Ring finger** → F Major (F, A, C)
-   - **Pinky** → D Major (D, F#, A)
-   - *Note: Chord assignments can be changed in Settings using different presets*
+1. 애플리케이션을 시작하고 로비에서 **연주 시작**을 선택합니다
+2. 웹캠 앞에 손을 위치시킵니다
+3. 손바닥이 카메라를 향하도록 유지합니다
+4. **손가락을 구부립니다** (피아노 건반을 누르듯이) 화음을 연주합니다
+5. 각 손가락은 다른 화음에 해당합니다 (기본 프리셋):
+   - **엄지** → C Major (C, E, G)
+   - **검지** → G Major (G, B, D)
+   - **중지** → A Minor (A, C, E)
+   - **약지** → F Major (F, A, C)
+   - **새끼손가락** → D Major (D, F#, A)
+   - *참고: 설정에서 다른 프리셋을 사용하여 화음 할당을 변경할 수 있습니다*
 
-6. Press **Q** or **ESC** to return to the lobby
+6. **Q** 또는 **ESC**를 눌러 로비로 돌아갑니다
 
-### Tips
+### 팁
 
-- Ensure good lighting for better hand detection
-- Keep your hand clearly visible to the camera
-- **Curl/bend your fingers deliberately** for best chord triggering
-- Experiment with different hand positions and movements
-- The thumb now works reliably with the bending detection algorithm
-- Adjust detection and tracking confidence in settings if hand detection is unstable
-- **Adjust sensitivity in settings** to control chord triggering:
-  - If chords trigger too easily (too sensitive): **increase** the sensitivity value
-  - If chords don't trigger easily enough: **decrease** the sensitivity value
-- **Try different chord presets** in settings to explore various chord progressions
-- Test your camera in the settings screen before playing to ensure it's working properly
+- 더 나은 손 감지를 위해 좋은 조명을 확보하세요
+- 손이 카메라에 명확하게 보이도록 유지하세요
+- 최상의 화음 트리거를 위해 **손가락을 의도적으로 구부리세요**
+- 다양한 손 위치와 움직임을 실험해보세요
+- 엄지는 이제 구부림 감지 알고리즘으로 안정적으로 작동합니다
+- 손 감지가 불안정한 경우 설정에서 감지 및 추적 신뢰도를 조정하세요
+- **설정에서 민감도를 조정**하여 화음 트리거를 제어하세요:
+  - 화음이 너무 쉽게 트리거되는 경우 (너무 민감함): 민감도 값을 **높이세요**
+  - 화음이 충분히 쉽게 트리거되지 않는 경우: 민감도 값을 **낮추세요**
+- **설정에서 다른 화음 프리셋을 시도**하여 다양한 화음 진행을 탐색하세요
+- 연주하기 전에 설정 화면에서 카메라를 테스트하여 제대로 작동하는지 확인하세요
 
-## Technical Details
+## 기술 세부사항
 
-### Technology Stack
+### 기술 스택
 
-- **OpenCV**: Camera input and image processing
-- **MediaPipe**: Hand landmark detection and tracking
-- **Pygame**: Audio playback system
-- **NumPy**: Signal processing for sound synthesis
+- **OpenCV**: 카메라 입력 및 이미지 처리
+- **MediaPipe**: 손 랜드마크 감지 및 추적
+- **Pygame**: 오디오 재생 시스템
+- **NumPy**: 사운드 합성을 위한 신호 처리
 
-### How It Works
+### 작동 원리
 
-1. **Hand Detection**: MediaPipe detects hand landmarks in real-time from webcam feed
-2. **Finger Tracking**: Tracks finger joint positions (fingertips and MCP knuckles)
-3. **Bending Detection**: Measures 3D Euclidean distance between fingertip and MCP joint for each finger
-4. **Chord Triggering**: When a finger bends (distance decreases by threshold %), plays the corresponding chord
-5. **Sound Synthesis**: Generates piano-like chord sounds by combining multiple sine waves with ADSR envelope
-6. **Configuration Management**: Saves user preferences to a JSON file for persistence across sessions
-7. **Multi-Screen GUI**: Provides intuitive navigation between lobby, settings, and play screens
+1. **손 감지**: MediaPipe가 웹캠 피드에서 실시간으로 손 랜드마크를 감지합니다
+2. **손가락 추적**: 손가락 관절 위치(손가락 끝과 MCP 손가락 마디)를 추적합니다
+3. **구부림 감지**: 각 손가락의 손가락 끝과 MCP 관절 사이의 3D 유클리드 거리를 측정합니다
+4. **화음 트리거**: 손가락이 구부러지면(거리가 임계값 %만큼 감소) 해당 화음을 재생합니다
+5. **사운드 합성**: ADSR 엔벨로프를 사용하여 여러 사인파를 결합하여 피아노와 같은 화음 사운드를 생성합니다
+6. **구성 관리**: 세션 간 지속성을 위해 사용자 기본 설정을 JSON 파일에 저장합니다
+7. **다중 화면 GUI**: 로비, 설정 및 연주 화면 간의 직관적인 탐색을 제공합니다
 
-### Algorithm Details
+### 알고리즘 세부사항
 
-The new **finger bending detection** algorithm:
-- Calculates the 3D distance between each fingertip and its corresponding MCP (knuckle) joint
-- When a finger curls/bends, this distance decreases
-- Triggers a chord when the relative distance change exceeds the threshold (default: 15%)
-- Works for all fingers including the thumb (which moves primarily in x-axis)
-- More reliable than the previous y-axis movement detection
+새로운 **손가락 구부림 감지** 알고리즘:
+- 각 손가락 끝과 해당 MCP(손가락 마디) 관절 사이의 3D 거리를 계산합니다
+- 손가락이 말리거나 구부러지면 이 거리가 감소합니다
+- 상대적인 거리 변화가 임계값(기본값: 15%)을 초과하면 화음을 트리거합니다
+- 주로 x축으로 움직이는 엄지를 포함한 모든 손가락에서 작동합니다
+- 이전의 y축 움직임 감지보다 더 안정적입니다
 
-## Configuration
+## 구성
 
-Settings are automatically saved to `finger_piano_config.json` in the application directory. The configuration file includes:
+설정은 애플리케이션 디렉토리의 `finger_piano_config.json`에 자동으로 저장됩니다. 구성 파일에는 다음이 포함됩니다:
 
-- **camera_id**: Camera device ID (default: 0)
-- **instrument**: Selected instrument (default: 'piano')
-- **chord_preset**: Selected chord preset (default: 'default', options: 'default', 'preset1', 'preset2', 'preset3')
-- **min_detection_confidence**: Hand detection confidence threshold (default: 0.7)
-- **min_tracking_confidence**: Hand tracking confidence threshold (default: 0.5)
-- **trigger_threshold**: Finger bending sensitivity for chord triggering (default: 0.15, range: 0.10-0.30)
-  - Lower values = more sensitive (chords trigger more easily)
-  - Higher values = less sensitive (requires more finger bending to trigger chords)
+- **camera_id**: 카메라 장치 ID (기본값: 0)
+- **instrument**: 선택한 악기 (기본값: 'piano')
+- **chord_preset**: 선택한 화음 프리셋 (기본값: 'default', 옵션: 'default', 'preset1', 'preset2', 'preset3')
+- **min_detection_confidence**: 손 감지 신뢰도 임계값 (기본값: 0.7)
+- **min_tracking_confidence**: 손 추적 신뢰도 임계값 (기본값: 0.5)
+- **trigger_threshold**: 화음 트리거를 위한 손가락 구부림 민감도 (기본값: 0.15, 범위: 0.10-0.30)
+  - 낮은 값 = 더 민감함 (화음이 더 쉽게 트리거됨)
+  - 높은 값 = 덜 민감함 (화음을 트리거하려면 더 많은 손가락 구부림 필요)
 
-You can manually edit this file if needed, or use the Settings screen in the application.
+필요한 경우 이 파일을 수동으로 편집하거나 애플리케이션의 설정 화면을 사용할 수 있습니다.
 
-## License
+## 라이선스
 
-MIT License - see [LICENSE](LICENSE) file for details
+MIT 라이선스 - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요
 
-## Author
+## 저자
 
-Hong Dongwan
+홍동완
 
-## Acknowledgments
+## 감사의 글
 
-- MediaPipe by Google for hand tracking
-- Pygame community for audio support
+- 손 추적을 위한 Google의 MediaPipe
+- 오디오 지원을 위한 Pygame 커뮤니티
