@@ -15,7 +15,8 @@ The application now features a multi-screen GUI with lobby, settings, and play s
   - ⚙️ **Settings Screen** - Configure camera, instrument, and detection sensitivity
   - 🎮 **Play Screen** - Interactive performance interface
 - **Real-time hand tracking** using MediaPipe
-- **Gesture-based piano playing** - move fingers down to play notes
+- **Gesture-based piano playing** - bend/curl fingers to play notes
+- **Improved finger bending detection** - works reliably for all fingers including thumb
 - **Visual feedback** showing which fingers are active
 - **Synthesized piano sounds** for a rich musical experience
 - **5 fingers mapped to 5 piano notes** (C major scale: C4, D4, E4, F4, G4)
@@ -70,7 +71,7 @@ Configure the application to your preferences:
 - **Instrument** - Choose between Piano, Guitar, Electric Guitar, or Violin
 - **Detection Confidence** - Adjust hand detection sensitivity (0.5-0.9)
 - **Tracking Confidence** - Adjust hand tracking sensitivity (0.3-0.7)
-- **Trigger Threshold** - Adjust finger press sensitivity (0.03-0.07)
+- **Trigger Threshold** - Adjust finger bending sensitivity (0.10-0.20)
 
 **Navigation:**
 - Use **UP/DOWN arrow keys** or **W/S** to navigate options
@@ -93,7 +94,7 @@ The performance interface shows:
 1. Start the application and select **Start Playing** from the lobby
 2. Position your hand in front of the webcam
 3. Keep your palm facing the camera
-4. Move your fingers downward (like pressing piano keys) to play notes
+4. **Bend/curl your fingers** (like pressing piano keys) to play notes
 5. Each finger corresponds to a different note:
    - **Thumb** → C4
    - **Index finger** → D4
@@ -107,10 +108,11 @@ The performance interface shows:
 
 - Ensure good lighting for better hand detection
 - Keep your hand clearly visible to the camera
-- Move fingers deliberately for best note triggering
+- **Curl/bend your fingers deliberately** for best note triggering
 - Experiment with different hand positions and movements
+- The thumb now works reliably with the bending detection algorithm
 - Adjust detection and tracking confidence in settings if hand detection is unstable
-- Adjust trigger threshold in settings to change how much finger movement is needed to trigger notes
+- Adjust trigger threshold in settings to change how much finger bending is needed to trigger notes
 - Test your camera in the settings screen before playing to ensure it's working properly
 
 ## Technical Details
@@ -125,12 +127,21 @@ The performance interface shows:
 ### How It Works
 
 1. **Hand Detection**: MediaPipe detects hand landmarks in real-time from webcam feed
-2. **Finger Tracking**: Tracks finger tip positions (landmarks 4, 8, 12, 16, 20)
-3. **Movement Detection**: Monitors vertical movement of finger tips
-4. **Note Triggering**: When a finger moves down past a threshold, plays the corresponding note
+2. **Finger Tracking**: Tracks finger joint positions (fingertips and MCP knuckles)
+3. **Bending Detection**: Measures 3D Euclidean distance between fingertip and MCP joint for each finger
+4. **Note Triggering**: When a finger bends (distance decreases by threshold %), plays the corresponding note
 5. **Sound Synthesis**: Generates piano-like sounds using sine waves with ADSR envelope
 6. **Configuration Management**: Saves user preferences to a JSON file for persistence across sessions
 7. **Multi-Screen GUI**: Provides intuitive navigation between lobby, settings, and play screens
+
+### Algorithm Details
+
+The new **finger bending detection** algorithm:
+- Calculates the 3D distance between each fingertip and its corresponding MCP (knuckle) joint
+- When a finger curls/bends, this distance decreases
+- Triggers a note when the relative distance change exceeds the threshold (default: 15%)
+- Works for all fingers including the thumb (which moves primarily in x-axis)
+- More reliable than the previous y-axis movement detection
 
 ## Configuration
 
@@ -140,7 +151,7 @@ Settings are automatically saved to `finger_piano_config.json` in the applicatio
 - **instrument**: Selected instrument (default: 'piano')
 - **min_detection_confidence**: Hand detection confidence threshold (default: 0.7)
 - **min_tracking_confidence**: Hand tracking confidence threshold (default: 0.5)
-- **trigger_threshold**: Finger movement threshold for note triggering (default: 0.05)
+- **trigger_threshold**: Finger bending threshold for note triggering (default: 0.15)
 
 You can manually edit this file if needed, or use the Settings screen in the application.
 

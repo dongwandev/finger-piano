@@ -235,6 +235,46 @@ class TestFingerPiano(unittest.TestCase):
         
         # Sound should have been played twice total
         self.assertEqual(self.piano.sounds['C4'].play.call_count, 2)
+    
+    def test_thumb_bending_detection(self):
+        """Test that thumb bending is properly detected with new algorithm.
+        
+        This specifically tests that thumb (finger_id=0) can trigger notes
+        by bending, regardless of x-axis or y-axis movement. This addresses
+        the issue where y-axis-only detection failed for thumbs.
+        """
+        # Mock the sound playing
+        for note in self.piano.sounds:
+            self.piano.sounds[note] = Mock()
+        
+        finger_id = 0  # Thumb
+        
+        # Initial state: thumb extended
+        self.piano.finger_extensions[finger_id] = 0.25
+        self.piano.finger_states[finger_id] = False
+        
+        # Thumb bends (curls) - extension decreases by 20%
+        # This could happen from ANY direction (x, y, or z movement)
+        # because we measure 3D Euclidean distance
+        bent_extension = 0.20  # 20% decrease
+        
+        should_play = self.piano._detect_finger_bending(finger_id, bent_extension)
+        self.assertTrue(should_play, "Thumb bending should trigger note")
+        
+        if should_play:
+            self.piano._play_note(finger_id)
+        
+        self.piano._update_finger_extension(finger_id, bent_extension)
+        
+        # Verify thumb note (C4) was played
+        self.assertTrue(self.piano.finger_states[finger_id])
+        self.piano.sounds['C4'].play.assert_called_once()
+        
+        # Thumb extends back - should reset
+        extended_extension = 0.25  # Back to original
+        self.piano._reset_finger_state(finger_id, extended_extension)
+        self.assertFalse(self.piano.finger_states[finger_id], 
+                        "Thumb extending should reset state")
 
 
 class TestSoundGeneration(unittest.TestCase):
