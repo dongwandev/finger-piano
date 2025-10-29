@@ -126,10 +126,12 @@ self.trigger_threshold = 0.08  # Less sensitive (higher value)
 You could extend the system to use two hands (10 fingers) for more notes:
 
 ```python
-# In __init__, change max_num_hands
+# In __init__, change max_num_hands to track both hands
 self.hands = self.mp_hands.Hands(
-    max_num_hands=2,  # Track both hands
-    ...
+    static_image_mode=False,
+    max_num_hands=2,  # Track both hands instead of 1
+    min_detection_confidence=0.7,
+    min_tracking_confidence=0.5
 )
 ```
 
