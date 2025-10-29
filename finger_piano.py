@@ -139,8 +139,9 @@ class FingerPiano:
             
             # Add all notes in the chord together
             for note in chord_notes:
-                if note in note_waves:
-                    chord_wave += note_waves[note] / len(chord_notes)  # Average to avoid clipping
+                if note not in note_waves:
+                    raise ValueError(f"Note '{note}' in chord '{chord_name}' not found in NOTE_FREQUENCIES")
+                chord_wave += note_waves[note] * 0.7  # Scale to prevent clipping while maintaining volume
             
             # Normalize and convert to 16-bit integers
             if np.max(np.abs(chord_wave)) > 0:
