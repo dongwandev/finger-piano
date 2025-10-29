@@ -9,7 +9,7 @@ Finger Piano uses computer vision and hand tracking to create an interactive mus
 ### Features
 
 - **Real-time hand tracking** using MediaPipe
-- **Gesture-based piano playing** - move fingers down to play notes
+- **Gesture-based piano playing** - fold fingers to play notes
 - **Visual feedback** showing which fingers are active
 - **Synthesized piano sounds** for a rich musical experience
 - **5 fingers mapped to 5 piano notes** (C major scale: C4, D4, E4, F4, G4)
@@ -43,8 +43,8 @@ python finger_piano.py
 ### How to Play
 
 1. Position your hand in front of the webcam
-2. Keep your palm facing the camera
-3. Move your fingers downward (like pressing piano keys) to play notes
+2. Keep your palm facing the camera with fingers extended (this is the default state)
+3. Fold/bend your fingers to play notes
 4. Each finger corresponds to a different note:
    - **Thumb** → C4
    - **Index finger** → D4
@@ -57,8 +57,8 @@ python finger_piano.py
 ### Tips
 
 - Ensure good lighting for better hand detection
-- Keep your hand clearly visible to the camera
-- Move fingers deliberately for best note triggering
+- Keep your hand clearly visible to the camera with fingers extended as the default state
+- Fold fingers deliberately for best note triggering
 - Experiment with different hand positions and movements
 
 ## Technical Details
@@ -75,7 +75,7 @@ python finger_piano.py
 1. **Hand Detection**: MediaPipe detects hand landmarks in real-time from webcam feed
 2. **Finger Tracking**: Tracks finger tip positions (landmarks 4, 8, 12, 16, 20)
 3. **Movement Detection**: Monitors vertical movement of finger tips
-4. **Note Triggering**: When a finger moves down past a threshold, plays the corresponding note
+4. **Note Triggering**: When a finger folds (moves up) past a threshold, plays the corresponding note
 5. **Sound Synthesis**: Generates piano-like sounds using sine waves with ADSR envelope
 
 ## License

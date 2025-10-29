@@ -42,9 +42,10 @@ The finger piano specifically tracks the 5 fingertip landmarks (4, 8, 12, 16, 20
 Notes are triggered based on vertical finger movement:
 
 1. **Detection**: The system monitors the Y-coordinate of each fingertip
-2. **Threshold**: When a finger moves down by more than 5% of screen height
-3. **Trigger**: The corresponding piano note plays
-4. **Reset**: When the finger moves up, it resets and can trigger again
+2. **Default State**: Fingers extended with palm facing camera
+3. **Threshold**: When a finger folds (moves up) by more than 5% of screen height
+4. **Trigger**: The corresponding piano note plays
+5. **Reset**: When the finger extends back down, it resets and can trigger again
 
 ### Sound Synthesis
 
@@ -81,8 +82,8 @@ Each piano note is synthesized using:
 If notes aren't triggering reliably:
 
 1. **Adjust lighting**: Ensure hand is well-lit
-2. **Check hand visibility**: Make sure all fingers are visible
-3. **Increase movement**: Make more deliberate finger motions
+2. **Check hand visibility**: Make sure all fingers are visible with fingers extended
+3. **Increase movement**: Make more deliberate finger folding motions
 4. **Check camera**: Ensure camera is focused properly
 
 ## Technical Architecture

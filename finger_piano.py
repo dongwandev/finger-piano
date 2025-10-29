@@ -141,24 +141,24 @@ class FingerPiano:
         return tips
     
     def _detect_finger_movement(self, finger_id: int, current_y: float) -> bool:
-        """Detect if a finger has moved down (like pressing a piano key).
+        """Detect if a finger has moved up (like folding/bending a finger).
         
         Args:
             finger_id: Index of the finger (0-4)
             current_y: Current y-position of the finger tip
             
         Returns:
-            True if the finger has moved down significantly
+            True if the finger has moved up significantly (folded)
         """
         previous_y = self.finger_y_positions[finger_id]
         
-        # Check if finger moved down (y increases downward in image coordinates)
-        movement = current_y - previous_y
+        # Check if finger moved up (finger folding - y decreases in standard image coordinates where y=0 is at top)
+        movement = previous_y - current_y
         
         # Update position
         self.finger_y_positions[finger_id] = current_y
         
-        # Trigger if moved down and not already playing
+        # Trigger if moved up (folded) and not already playing
         if movement > self.trigger_threshold and not self.finger_states[finger_id]:
             return True
         
@@ -177,7 +177,7 @@ class FingerPiano:
                 self.finger_states[finger_id] = True
     
     def _reset_finger_state(self, finger_id: int, current_y: float):
-        """Reset finger state when it moves back up.
+        """Reset finger state when it extends back down.
         
         Args:
             finger_id: Index of the finger (0-4)
@@ -185,8 +185,8 @@ class FingerPiano:
         """
         previous_y = self.finger_y_positions[finger_id]
         
-        # Reset if finger moved up significantly
-        if current_y < previous_y - self.trigger_threshold:
+        # Reset if finger extended down significantly
+        if current_y > previous_y + self.trigger_threshold:
             self.finger_states[finger_id] = False
     
     def _draw_ui(self, image, hand_landmarks, image_width: int, image_height: int):
@@ -221,7 +221,7 @@ class FingerPiano:
             y_offset += 30
         
         # Draw instructions
-        cv2.putText(image, "Move fingers down to play notes", 
+        cv2.putText(image, "Fold fingers to play notes", 
                    (10, image_height - 20), cv2.FONT_HERSHEY_SIMPLEX,
                    0.7, (255, 255, 255), 2)
         cv2.putText(image, "Press 'q' to quit", 
@@ -231,7 +231,7 @@ class FingerPiano:
     def run(self):
         """Main loop for the finger piano application."""
         print("Finger Piano started. Press 'q' to quit.")
-        print("Move your fingers down to play piano notes!")
+        print("Fold your fingers to play piano notes!")
         
         while True:
             # Read frame from camera
