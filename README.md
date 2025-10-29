@@ -71,7 +71,9 @@ Configure the application to your preferences:
 - **Instrument** - Choose between Piano, Guitar, Electric Guitar, or Violin
 - **Detection Confidence** - Adjust hand detection sensitivity (0.5-0.9)
 - **Tracking Confidence** - Adjust hand tracking sensitivity (0.3-0.7)
-- **Trigger Threshold** - Adjust finger bending sensitivity (0.10-0.20)
+- **Sensitivity** - Adjust finger bending sensitivity (0.10-0.30)
+  - **Lower values = More sensitive** (easier to trigger chords)
+  - **Higher values = Less sensitive** (requires more finger bending)
 
 **Navigation:**
 - Use **UP/DOWN arrow keys** or **W/S** to navigate options
@@ -112,7 +114,9 @@ The performance interface shows:
 - Experiment with different hand positions and movements
 - The thumb now works reliably with the bending detection algorithm
 - Adjust detection and tracking confidence in settings if hand detection is unstable
-- Adjust trigger threshold in settings to change how much finger bending is needed to trigger chords
+- **Adjust sensitivity in settings** to control chord triggering:
+  - If chords trigger too easily (too sensitive): **increase** the sensitivity value
+  - If chords don't trigger easily enough: **decrease** the sensitivity value
 - Test your camera in the settings screen before playing to ensure it's working properly
 
 ## Technical Details
@@ -151,7 +155,9 @@ Settings are automatically saved to `finger_piano_config.json` in the applicatio
 - **instrument**: Selected instrument (default: 'piano')
 - **min_detection_confidence**: Hand detection confidence threshold (default: 0.7)
 - **min_tracking_confidence**: Hand tracking confidence threshold (default: 0.5)
-- **trigger_threshold**: Finger bending threshold for chord triggering (default: 0.15)
+- **trigger_threshold**: Finger bending sensitivity for chord triggering (default: 0.15, range: 0.10-0.30)
+  - Lower values = more sensitive (chords trigger more easily)
+  - Higher values = less sensitive (requires more finger bending to trigger chords)
 
 You can manually edit this file if needed, or use the Settings screen in the application.
 
