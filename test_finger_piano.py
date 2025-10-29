@@ -304,6 +304,36 @@ class TestSoundGeneration(unittest.TestCase):
         # Check wave is bounded between -1 and 1
         self.assertLessEqual(np.max(wave), 1.0)
         self.assertGreaterEqual(np.min(wave), -1.0)
+    
+    @patch('finger_piano.cv2.VideoCapture')
+    @patch('finger_piano.pygame.mixer.init')
+    @patch('finger_piano.pygame.sndarray.make_sound')
+    def test_instrument_specific_sounds(self, mock_make_sound, mock_mixer, mock_capture):
+        """Test that different instruments generate different sounds."""
+        # Mock camera
+        mock_cap = Mock()
+        mock_cap.isOpened.return_value = True
+        mock_capture.return_value = mock_cap
+        
+        # Mock sound creation
+        mock_sound = Mock()
+        mock_make_sound.return_value = mock_sound
+        
+        # Test each instrument generates sounds
+        instruments = ['piano', 'guitar', 'electric_guitar', 'violin']
+        for instrument in instruments:
+            config = Config()
+            config.set('instrument', instrument)
+            
+            piano = FingerPiano(config)
+            
+            # Check that sounds were generated
+            self.assertIsNotNone(piano.sounds)
+            self.assertGreater(len(piano.sounds), 0)
+            
+            # Check that all chords have sounds
+            for chord_name in piano.CHORDS.keys():
+                self.assertIn(chord_name, piano.sounds)
 
 
 class TestConfig(unittest.TestCase):

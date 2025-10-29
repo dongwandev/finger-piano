@@ -37,6 +37,14 @@ class FingerPiano:
         'C5': 523.25, 'D5': 587.33, 'E5': 659.25
     }
     
+    # Instrument sound synthesis parameters
+    INSTRUMENT_PARAMS = {
+        'violin': {
+            'vibrato_rate': 5.5,      # Hz
+            'vibrato_depth': 0.02,     # 2% frequency variation
+        }
+    }
+    
     # Colors for visualization
     COLORS = {
         'active': (0, 255, 0),      # Green for active finger
@@ -95,11 +103,12 @@ class FingerPiano:
         self.screens = {}
         
     def _generate_piano_sounds(self) -> dict:
-        """Generate synthesized piano sounds for each chord.
+        """Generate synthesized sounds for each chord based on selected instrument.
         
         Returns:
             Dictionary mapping chord names to pygame Sound objects
         """
+        instrument = self.config.get('instrument', 'piano')
         sounds = {}
         sample_rate = 22050
         duration = 0.5  # seconds
@@ -107,29 +116,99 @@ class FingerPiano:
         # First, generate individual note waves
         note_waves = {}
         for note, frequency in self.NOTE_FREQUENCIES.items():
-            # Generate a simple sine wave with ADSR envelope
             samples = int(sample_rate * duration)
             wave = np.zeros(samples)
             
             for i in range(samples):
                 t = i / sample_rate
                 
-                # ADSR envelope
-                if t < 0.05:  # Attack
-                    envelope = t / 0.05
-                elif t < 0.1:  # Decay
-                    envelope = 1.0 - 0.3 * (t - 0.05) / 0.05
-                elif t < 0.4:  # Sustain
-                    envelope = 0.7
-                else:  # Release
-                    envelope = 0.7 * (1.0 - (t - 0.4) / 0.1)
-                
-                # Generate sine wave with envelope
-                wave[i] = envelope * np.sin(2 * np.pi * frequency * t)
-                
-                # Add harmonics for richer sound
-                wave[i] += 0.3 * envelope * np.sin(4 * np.pi * frequency * t)
-                wave[i] += 0.1 * envelope * np.sin(6 * np.pi * frequency * t)
+                # ADSR envelope - different for each instrument
+                if instrument == 'piano':
+                    # Piano: Sharp attack, moderate decay, short sustain
+                    if t < 0.05:  # Attack
+                        envelope = t / 0.05
+                    elif t < 0.1:  # Decay
+                        envelope = 1.0 - 0.3 * (t - 0.05) / 0.05
+                    elif t < 0.4:  # Sustain
+                        envelope = 0.7
+                    else:  # Release
+                        envelope = 0.7 * (1.0 - (t - 0.4) / 0.1)
+                    
+                    # Piano: Rich harmonics
+                    wave[i] = envelope * np.sin(2 * np.pi * frequency * t)
+                    wave[i] += 0.3 * envelope * np.sin(4 * np.pi * frequency * t)
+                    wave[i] += 0.1 * envelope * np.sin(6 * np.pi * frequency * t)
+                    
+                elif instrument == 'guitar':
+                    # Guitar: Moderate attack, longer sustain, natural decay
+                    guitar_release_duration = 0.05
+                    if t < 0.08:  # Attack
+                        envelope = t / 0.08
+                    elif t < 0.15:  # Decay
+                        envelope = 1.0 - 0.2 * (t - 0.08) / 0.07
+                    elif t < 0.45:  # Sustain
+                        envelope = 0.8 * np.exp(-2 * (t - 0.15))
+                    else:  # Release
+                        envelope = 0.8 * np.exp(-2 * (t - 0.15)) * (1.0 - (t - 0.45) / guitar_release_duration)
+                    
+                    # Guitar: Warm tone with plucked string harmonics
+                    wave[i] = envelope * np.sin(2 * np.pi * frequency * t)
+                    wave[i] += 0.4 * envelope * np.sin(3 * np.pi * frequency * t)
+                    wave[i] += 0.25 * envelope * np.sin(5 * np.pi * frequency * t)
+                    wave[i] += 0.1 * envelope * np.sin(7 * np.pi * frequency * t)
+                    
+                elif instrument == 'electric_guitar':
+                    # Electric Guitar: Sharp attack, long sustain with distortion harmonics
+                    electric_release_duration = 0.02
+                    if t < 0.03:  # Attack
+                        envelope = t / 0.03
+                    elif t < 0.08:  # Decay
+                        envelope = 1.0 - 0.1 * (t - 0.03) / 0.05
+                    elif t < 0.48:  # Sustain (longer for electric)
+                        envelope = 0.9
+                    else:  # Release
+                        envelope = 0.9 * (1.0 - (t - 0.48) / electric_release_duration)
+                    
+                    # Electric Guitar: Bright tone with more harmonics
+                    wave[i] = envelope * np.sin(2 * np.pi * frequency * t)
+                    wave[i] += 0.5 * envelope * np.sin(4 * np.pi * frequency * t)
+                    wave[i] += 0.3 * envelope * np.sin(6 * np.pi * frequency * t)
+                    wave[i] += 0.2 * envelope * np.sin(8 * np.pi * frequency * t)
+                    wave[i] += 0.1 * envelope * np.sin(10 * np.pi * frequency * t)
+                    
+                elif instrument == 'violin':
+                    # Violin: Slow attack (bow), continuous sustain with vibrato
+                    violin_release_duration = 0.05
+                    if t < 0.1:  # Attack (bow starting)
+                        envelope = t / 0.1
+                    elif t < 0.45:  # Sustain
+                        envelope = 1.0
+                    else:  # Release
+                        envelope = 1.0 * (1.0 - (t - 0.45) / violin_release_duration)
+                    
+                    # Violin: String-like tone with vibrato
+                    vibrato_rate = self.INSTRUMENT_PARAMS['violin']['vibrato_rate']
+                    vibrato_depth = self.INSTRUMENT_PARAMS['violin']['vibrato_depth']
+                    vibrato = 1.0 + vibrato_depth * np.sin(2 * np.pi * vibrato_rate * t)
+                    
+                    wave[i] = envelope * np.sin(2 * np.pi * frequency * vibrato * t)
+                    wave[i] += 0.35 * envelope * np.sin(4 * np.pi * frequency * vibrato * t)
+                    wave[i] += 0.2 * envelope * np.sin(6 * np.pi * frequency * vibrato * t)
+                    wave[i] += 0.15 * envelope * np.sin(8 * np.pi * frequency * vibrato * t)
+                else:
+                    # Fallback to piano
+                    if t < 0.05:
+                        envelope = t / 0.05
+                    elif t < 0.1:
+                        envelope = 1.0 - 0.3 * (t - 0.05) / 0.05
+                    elif t < 0.4:
+                        envelope = 0.7
+                    else:
+                        envelope = 0.7 * (1.0 - (t - 0.4) / 0.1)
+                    
+                    wave[i] = envelope * np.sin(2 * np.pi * frequency * t)
+                    wave[i] += 0.3 * envelope * np.sin(4 * np.pi * frequency * t)
+                    wave[i] += 0.1 * envelope * np.sin(6 * np.pi * frequency * t)
             
             note_waves[note] = wave
         
@@ -425,6 +504,9 @@ class FingerPiano:
         
         # Update trigger threshold
         self.trigger_threshold = self.config.get('trigger_threshold', 0.15)
+        
+        # Regenerate sounds for the selected instrument
+        self.sounds = self._generate_piano_sounds()
         
         # Reset finger states
         self.finger_states = [False] * 5
