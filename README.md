@@ -1,10 +1,10 @@
 # Finger Piano 🎹✋
 
-A virtual instrument program that recognizes finger joints as landmarks and plays piano sounds as your fingers move.
+A virtual instrument program that recognizes finger joints as landmarks and plays musical instrument sounds as your fingers move.
 
 ## Description
 
-Finger Piano uses computer vision and hand tracking to create an interactive musical instrument. By detecting your hand landmarks through your webcam, it maps finger movements to piano keys, allowing you to play music with natural hand gestures.
+Finger Piano uses computer vision and hand tracking to create an interactive musical instrument. By detecting your hand landmarks through your webcam, it maps finger movements to musical notes, allowing you to play music with natural hand gestures. Choose from multiple instruments including piano, guitar, electric guitar, and violin.
 
 The application now features a multi-screen GUI with lobby, settings, and play screens for an enhanced user experience.
 
@@ -15,9 +15,9 @@ The application now features a multi-screen GUI with lobby, settings, and play s
   - ⚙️ **Settings Screen** - Configure camera, instrument, and detection sensitivity
   - 🎮 **Play Screen** - Interactive performance interface
 - **Real-time hand tracking** using MediaPipe
-- **Gesture-based piano playing** - move fingers down to play notes
+- **Gesture-based playing** - move fingers down to play notes
 - **Visual feedback** showing which fingers are active
-- **Synthesized piano sounds** for a rich musical experience
+- **Synthesized instrument sounds** with realistic harmonics and ADSR envelopes
 - **5 fingers mapped to 5 chords** (C Major, G Major, A Minor, F Major, D Major)
 - **Configurable settings** with persistent storage
 - **Multiple instrument support** (Piano, Guitar, Electric Guitar, Violin)
@@ -128,7 +128,7 @@ The performance interface shows:
 2. **Finger Tracking**: Tracks finger tip positions (landmarks 4, 8, 12, 16, 20)
 3. **Movement Detection**: Monitors vertical movement of finger tips
 4. **Chord Triggering**: When a finger moves down past a threshold, plays the corresponding chord
-5. **Sound Synthesis**: Generates piano-like chord sounds by combining multiple sine waves with ADSR envelope
+5. **Sound Synthesis**: Generates instrument-specific chord sounds by combining multiple sine waves with harmonic profiles and ADSR envelopes unique to each instrument (piano, guitar, electric guitar, violin)
 6. **Configuration Management**: Saves user preferences to a JSON file for persistence across sessions
 7. **Multi-Screen GUI**: Provides intuitive navigation between lobby, settings, and play screens
 
