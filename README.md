@@ -17,7 +17,7 @@ The application now features a multi-screen GUI with lobby, settings, and play s
 - **Real-time hand tracking** using MediaPipe
 - **Gesture-based piano playing** - bend/curl fingers to play chords
 - **Improved finger bending detection** - works reliably for all fingers including thumb
-- **Visual feedback** showing which fingers are active
+- **Visual feedback** showing which fingers are active with flexion percentage display
 - **Synthesized piano sounds** for a rich musical experience
 - **Customizable chord presets** - Choose from 4 different chord configurations
   - Default preset with 5 chords (all fingers)
@@ -93,7 +93,10 @@ Configure the application to your preferences:
 #### 🎮 Play Screen
 The performance interface shows:
 - **Camera feed** with hand tracking visualization
-- **Top-left corner** - Finger status (which fingers are active)
+- **Top-left corner** - Finger status showing:
+  - Which fingers are active (green when playing, gray when inactive)
+  - The chord assigned to each finger
+  - Real-time flexion percentage (0-100%) indicating how much each finger is bent
 - **Top-right corner** - Current instrument selection
 
 **Navigation:**
@@ -143,19 +146,28 @@ The performance interface shows:
 1. **Hand Detection**: MediaPipe detects hand landmarks in real-time from webcam feed
 2. **Finger Tracking**: Tracks finger joint positions (fingertips and MCP knuckles)
 3. **Bending Detection**: Measures 3D Euclidean distance between fingertip and MCP joint for each finger
-4. **Chord Triggering**: When a finger bends (distance decreases by threshold %), plays the corresponding chord
-5. **Sound Synthesis**: Generates piano-like chord sounds by combining multiple sine waves with ADSR envelope
-6. **Configuration Management**: Saves user preferences to a JSON file for persistence across sessions
-7. **Multi-Screen GUI**: Provides intuitive navigation between lobby, settings, and play screens
+4. **Flexion Calculation**: Calculates flexion percentage (0-100%) based on current vs maximum extension
+5. **Chord Triggering**: When a finger bends (distance decreases by threshold %), plays the corresponding chord
+6. **Visual Feedback**: Displays real-time finger status with chord assignments and flexion percentages
+7. **Sound Synthesis**: Generates piano-like chord sounds by combining multiple sine waves with ADSR envelope
+8. **Configuration Management**: Saves user preferences to a JSON file for persistence across sessions
+9. **Multi-Screen GUI**: Provides intuitive navigation between lobby, settings, and play screens
 
 ### Algorithm Details
 
-The new **finger bending detection** algorithm:
+The **finger bending detection** algorithm:
 - Calculates the 3D distance between each fingertip and its corresponding MCP (knuckle) joint
 - When a finger curls/bends, this distance decreases
 - Triggers a chord when the relative distance change exceeds the threshold (default: 15%)
 - Works for all fingers including the thumb (which moves primarily in x-axis)
 - More reliable than the previous y-axis movement detection
+
+The **flexion percentage calculation**:
+- Tracks the maximum extension (fully extended position) for each finger
+- Calculates flexion as: `(max_extension - current_extension) / max_extension × 100%`
+- 0% = fully extended (straight finger)
+- 100% = fully flexed (completely bent/curled finger)
+- Updates in real-time and displays alongside each finger's status
 
 ## Configuration
 

@@ -279,6 +279,77 @@ class TestFingerPiano(unittest.TestCase):
         self.piano._reset_finger_state(finger_id, extended_extension)
         self.assertFalse(self.piano.finger_states[finger_id], 
                         "Thumb extending should reset state")
+    
+    def test_flexion_percentage_calculation(self):
+        """Test that flexion percentage is calculated correctly."""
+        # Mock the sound playing
+        for chord_name in self.piano.sounds:
+            self.piano.sounds[chord_name] = Mock()
+        
+        finger_id = 1  # Index finger
+        
+        # Set initial fully extended state (base extension)
+        initial_extension = 0.20
+        self.piano._update_finger_extension(finger_id, initial_extension)
+        
+        # Should be 0% flexion when fully extended
+        self.assertAlmostEqual(self.piano.finger_flexion_percent[finger_id], 0.0, places=1)
+        self.assertEqual(self.piano.finger_base_extensions[finger_id], initial_extension)
+        
+        # Bend finger to 50% (50% of base extension)
+        bent_extension = 0.10  # 50% decrease from 0.20
+        self.piano._update_finger_extension(finger_id, bent_extension)
+        
+        # Should be 50% flexion
+        self.assertAlmostEqual(self.piano.finger_flexion_percent[finger_id], 50.0, places=1)
+        
+        # Bend finger more to 75% (25% of base extension)
+        more_bent_extension = 0.05  # 75% decrease from 0.20
+        self.piano._update_finger_extension(finger_id, more_bent_extension)
+        
+        # Should be 75% flexion
+        self.assertAlmostEqual(self.piano.finger_flexion_percent[finger_id], 75.0, places=1)
+        
+        # Extend finger back fully
+        self.piano._update_finger_extension(finger_id, initial_extension)
+        
+        # Should be back to 0% flexion
+        self.assertAlmostEqual(self.piano.finger_flexion_percent[finger_id], 0.0, places=1)
+    
+    def test_flexion_percentage_base_update(self):
+        """Test that base extension updates when finger extends beyond current base."""
+        finger_id = 2  # Middle finger
+        
+        # Start with moderate extension
+        self.piano._update_finger_extension(finger_id, 0.15)
+        self.assertEqual(self.piano.finger_base_extensions[finger_id], 0.15)
+        
+        # Extend further - base should update
+        self.piano._update_finger_extension(finger_id, 0.20)
+        self.assertEqual(self.piano.finger_base_extensions[finger_id], 0.20)
+        self.assertAlmostEqual(self.piano.finger_flexion_percent[finger_id], 0.0, places=1)
+        
+        # Bend finger
+        self.piano._update_finger_extension(finger_id, 0.10)
+        self.assertAlmostEqual(self.piano.finger_flexion_percent[finger_id], 50.0, places=1)
+        # Base should remain at max seen
+        self.assertEqual(self.piano.finger_base_extensions[finger_id], 0.20)
+    
+    def test_flexion_percentage_bounds(self):
+        """Test that flexion percentage is clamped to 0-100 range."""
+        finger_id = 3  # Ring finger
+        
+        # Set base extension
+        self.piano._update_finger_extension(finger_id, 0.20)
+        
+        # Try negative extension (shouldn't happen but test bounds)
+        self.piano._update_finger_extension(finger_id, 0.25)
+        # Should update base and stay at 0%
+        self.assertAlmostEqual(self.piano.finger_flexion_percent[finger_id], 0.0, places=1)
+        
+        # Extreme bending shouldn't exceed 100%
+        self.piano._update_finger_extension(finger_id, 0.0)
+        self.assertAlmostEqual(self.piano.finger_flexion_percent[finger_id], 100.0, places=1)
 
 
 class TestSoundGeneration(unittest.TestCase):
