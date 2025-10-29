@@ -101,6 +101,8 @@ class FingerPiano:
         # Track finger states (whether each finger is currently playing)
         self.finger_states = [False] * 5
         self.finger_extensions = [1.0] * 5  # Track finger extension (distance from tip to MCP)
+        self.finger_base_extensions = [0.0] * 5  # Track maximum (fully extended) finger extension for each finger
+        self.finger_flexion_percent = [0.0] * 5  # Track flexion percentage (0-100%)
         
         # Threshold for triggering notes (relative change in finger extension)
         # When finger bends, extension decreases
@@ -279,13 +281,31 @@ class FingerPiano:
         return False
     
     def _update_finger_extension(self, finger_id: int, current_extension: float):
-        """Update the tracked extension of a finger.
+        """Update the tracked extension of a finger and calculate flexion percentage.
         
         Args:
             finger_id: Index of the finger (0-4)
             current_extension: Current extension distance (tip to MCP)
         """
+        # Update base extension if this is the most extended we've seen this finger
+        # (assume finger starts extended or becomes extended at some point)
+        if current_extension > self.finger_base_extensions[finger_id]:
+            self.finger_base_extensions[finger_id] = current_extension
+        
         self.finger_extensions[finger_id] = current_extension
+        
+        # Calculate flexion percentage
+        # 0% = fully extended (max distance), 100% = fully flexed (min distance)
+        base = self.finger_base_extensions[finger_id]
+        if base > 0:
+            # Flexion % = (base - current) / base * 100
+            # When current == base (extended), flexion = 0%
+            # When current < base (bent), flexion > 0%
+            flexion_percent = ((base - current_extension) / base) * 100
+            # Clamp to 0-100 range
+            self.finger_flexion_percent[finger_id] = max(0.0, min(100.0, flexion_percent))
+        else:
+            self.finger_flexion_percent[finger_id] = 0.0
     
     def _draw_ui(self, image, hand_landmarks, image_width: int, image_height: int):
         """Draw UI elements on the image.
@@ -450,6 +470,8 @@ class FingerPiano:
         # Reset finger states
         self.finger_states = [False] * 5
         self.finger_extensions = [1.0] * 5
+        self.finger_base_extensions = [0.0] * 5
+        self.finger_flexion_percent = [0.0] * 5
     
     def cleanup(self):
         """Release resources."""

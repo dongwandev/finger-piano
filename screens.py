@@ -440,9 +440,9 @@ class PlayScreen(Screen):
         finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
         y_offset = 30
         
-        # Draw background for finger status (wider to accommodate chord names)
-        cv2.rectangle(frame, (5, 5), (300, 175), (0, 0, 0), -1)
-        cv2.rectangle(frame, (5, 5), (300, 175), (255, 255, 255), 2)
+        # Draw background for finger status (wider to accommodate chord names and flexion %)
+        cv2.rectangle(frame, (5, 5), (380, 175), (0, 0, 0), -1)
+        cv2.rectangle(frame, (5, 5), (380, 175), (255, 255, 255), 2)
         
         for i in range(5):
             # Use current preset chord assignments
@@ -451,9 +451,14 @@ class PlayScreen(Screen):
             if not chord:
                 chord = 'Unassigned'
             is_active = self.piano.finger_states[i] if i < len(self.piano.finger_states) else False
+            
+            # Get flexion percentage
+            flexion = self.piano.finger_flexion_percent[i] if i < len(self.piano.finger_flexion_percent) else 0.0
+            
             color = (0, 255, 0) if is_active else (100, 100, 100)
             
-            text = f"{finger_names[i]}: {chord}"
+            # Display finger name, chord, and flexion percentage
+            text = f"{finger_names[i]}: {chord} ({flexion:.0f}%)"
             cv2.putText(frame, text, (15, y_offset), cv2.FONT_HERSHEY_SIMPLEX,
                        0.6, color, 2)
             y_offset += 30
