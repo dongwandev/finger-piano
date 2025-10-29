@@ -83,33 +83,33 @@ class TestFingerPiano(unittest.TestCase):
         self.piano.finger_y_positions = [0.5, 0.5, 0.5, 0.5, 0.5]
         self.piano.finger_states = [False, False, False, False, False]
         
-        # Test downward movement (should trigger)
-        result = self.piano._detect_finger_movement(0, 0.6)
+        # Test upward movement - finger folding (should trigger)
+        result = self.piano._detect_finger_movement(0, 0.4)
         self.assertTrue(result)
         
         # Test small movement (should not trigger)
         self.piano.finger_states[1] = False
-        result = self.piano._detect_finger_movement(1, 0.52)
+        result = self.piano._detect_finger_movement(1, 0.48)
         self.assertFalse(result)
         
-        # Test upward movement (should not trigger)
+        # Test downward movement - finger extending (should not trigger)
         self.piano.finger_states[2] = False
-        result = self.piano._detect_finger_movement(2, 0.4)
+        result = self.piano._detect_finger_movement(2, 0.6)
         self.assertFalse(result)
     
     def test_finger_state_reset(self):
-        """Test finger state reset on upward movement."""
+        """Test finger state reset on downward movement (extending)."""
         # Set initial state
-        self.piano.finger_y_positions = [0.6, 0.6, 0.6, 0.6, 0.6]
+        self.piano.finger_y_positions = [0.4, 0.4, 0.4, 0.4, 0.4]
         self.piano.finger_states = [True, True, True, True, True]
         
-        # Test upward movement (should reset)
+        # Test downward movement - finger extending (should reset)
         self.piano._reset_finger_state(0, 0.5)
         self.assertFalse(self.piano.finger_states[0])
         
-        # Test small upward movement (should not reset)
+        # Test small downward movement (should not reset)
         self.piano.finger_states[1] = True
-        self.piano._reset_finger_state(1, 0.58)
+        self.piano._reset_finger_state(1, 0.42)
         self.assertTrue(self.piano.finger_states[1])
     
     def test_initial_state(self):
