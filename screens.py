@@ -419,16 +419,16 @@ class PlayScreen(Screen):
         finger_names = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
         y_offset = 30
         
-        # Draw background for finger status
-        cv2.rectangle(frame, (5, 5), (250, 175), (0, 0, 0), -1)
-        cv2.rectangle(frame, (5, 5), (250, 175), (255, 255, 255), 2)
+        # Draw background for finger status (wider to accommodate chord names)
+        cv2.rectangle(frame, (5, 5), (300, 175), (0, 0, 0), -1)
+        cv2.rectangle(frame, (5, 5), (300, 175), (255, 255, 255), 2)
         
         for i in range(5):
-            note = self.piano.NOTES[i] if i < len(self.piano.NOTES) else 'N/A'
+            chord = self.piano.NOTES[i] if i < len(self.piano.NOTES) else 'N/A'
             is_active = self.piano.finger_states[i] if i < len(self.piano.finger_states) else False
             color = (0, 255, 0) if is_active else (100, 100, 100)
             
-            text = f"{finger_names[i]}: {note}"
+            text = f"{finger_names[i]}: {chord}"
             cv2.putText(frame, text, (15, y_offset), cv2.FONT_HERSHEY_SIMPLEX,
                        0.6, color, 2)
             y_offset += 30

@@ -18,7 +18,7 @@ The application now features a multi-screen GUI with lobby, settings, and play s
 - **Gesture-based piano playing** - move fingers down to play notes
 - **Visual feedback** showing which fingers are active
 - **Synthesized piano sounds** for a rich musical experience
-- **5 fingers mapped to 5 piano notes** (C major scale: C4, D4, E4, F4, G4)
+- **5 fingers mapped to 5 chords** (C Major, G Major, A Minor, F Major, D Major)
 - **Configurable settings** with persistent storage
 - **Multiple instrument support** (Piano, Guitar, Electric Guitar, Violin)
 - **Adjustable sensitivity** for detection and tracking confidence
@@ -93,13 +93,13 @@ The performance interface shows:
 1. Start the application and select **Start Playing** from the lobby
 2. Position your hand in front of the webcam
 3. Keep your palm facing the camera
-4. Move your fingers downward (like pressing piano keys) to play notes
-5. Each finger corresponds to a different note:
-   - **Thumb** → C4
-   - **Index finger** → D4
-   - **Middle finger** → E4
-   - **Ring finger** → F4
-   - **Pinky** → G4
+4. Move your fingers downward (like pressing piano keys) to play chords
+5. Each finger corresponds to a different chord:
+   - **Thumb** → C Major (C, E, G)
+   - **Index finger** → G Major (G, B, D)
+   - **Middle finger** → A Minor (A, C, E)
+   - **Ring finger** → F Major (F, A, C)
+   - **Pinky** → D Major (D, F#, A)
 
 6. Press **Q** or **ESC** to return to the lobby
 
@@ -127,8 +127,8 @@ The performance interface shows:
 1. **Hand Detection**: MediaPipe detects hand landmarks in real-time from webcam feed
 2. **Finger Tracking**: Tracks finger tip positions (landmarks 4, 8, 12, 16, 20)
 3. **Movement Detection**: Monitors vertical movement of finger tips
-4. **Note Triggering**: When a finger moves down past a threshold, plays the corresponding note
-5. **Sound Synthesis**: Generates piano-like sounds using sine waves with ADSR envelope
+4. **Chord Triggering**: When a finger moves down past a threshold, plays the corresponding chord
+5. **Sound Synthesis**: Generates piano-like chord sounds by combining multiple sine waves with ADSR envelope
 6. **Configuration Management**: Saves user preferences to a JSON file for persistence across sessions
 7. **Multi-Screen GUI**: Provides intuitive navigation between lobby, settings, and play screens
 
